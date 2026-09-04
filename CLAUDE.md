@@ -40,9 +40,9 @@ AGP 8.7.2 / Kotlin 2.0.21 / Compose BOM 2024.10.01，minSdk 26、compileSdk 35�
 ```
 data/          日记模型、内存仓库、统计、Markdown 导出
 ui/theme/      Color.kt 和 Type.kt 是设计 token 的落点
-ui/components/ 卡片、胶囊、心情色点、照片块、底部栏
-ui/screens/    六屏，文件名对应设计稿编号
-ui/nav/        MoodiaryApp.kt —— 四个 tab + 两个全屏浮层
+ui/components/ 卡片、胶囊、照片块、底部栏
+ui/screens/    十二屏，文件名对应设计稿编号（07/08/09 同在 DetailScreen.kt）
+ui/nav/        MoodiaryApp.kt —— 四个 tab + 一个浮层back stack（最深三层：编辑→地点→地图）
 ```
 
 `DiaryRepository` 是接口，当前实现是进程内存储（`InMemoryDiaryRepository`），
@@ -61,6 +61,16 @@ ui/nav/        MoodiaryApp.kt —— 四个 tab + 两个全屏浮层
 - 统计数字实算，不用设计稿里的 216 / 12 / 483
 - "Face ID" 改成"生物识别"
 - 种子日记按「距今天数」锚定，不写死 2026 年 9 月
+- 纯文字日记仍然能写能显示（设计稿第二版把纯文字样例卡删了，但日记不能强制配图）
+- `PlaceSource` / `MapSurface` / `UpdateChecker` 三处是桩：附近地点要定位权限加
+  POI 服务商 key，地图要地图 SDK，更新要发布源，这个工程都没有。桩外面的 UI 是
+  真的，换实现只动这三处
+
+## 心情体系已经删了
+
+设计稿第二版把心情整套移除了，改成地点。代码里**没有 `Mood` 类型**，
+日历上的点是「这天有记录」的意思（单一 accent 色），不是心情色。
+看到旧截图或旧文档提到心情，那是第一版的东西，不要照着加回来。
 
 ## 主题
 

@@ -12,11 +12,20 @@ over MCP.
 | # | Screen | File |
 |---|---|---|
 | 01 | 时间线 — the daily feed | `ui/screens/TimelineScreen.kt` |
-| 02 | 发布 / 编辑 — write, attach, tag | `ui/screens/EditorScreen.kt` |
-| 03 | 日历 — month grid with mood dots | `ui/screens/CalendarScreen.kt` |
+| 02 | 发布 / 编辑 — write, attach, place, tag | `ui/screens/EditorScreen.kt` |
+| 03 | 日历 — month grid marking days with entries | `ui/screens/CalendarScreen.kt` |
 | 04 | 搜索 — full text + tags | `ui/screens/SearchScreen.kt` |
-| 05 | 洞察 — weekly review, 14-day mood chart | `ui/screens/InsightsScreen.kt` |
-| 06 | 我的 — stats, export, reminder, lock | `ui/screens/ProfileScreen.kt` |
+| 05 | 洞察 — Claude's weekly review | `ui/screens/InsightsScreen.kt` |
+| 06 | 我的 — stats, export, reminder, lock, update | `ui/screens/ProfileScreen.kt` |
+| 07 | 日记详情 — one entry in full | `ui/screens/DetailScreen.kt` |
+| 08 | 更多操作 — edit / export / delete sheet | `ui/screens/DetailScreen.kt` |
+| 09 | 删除确认 | `ui/screens/DetailScreen.kt` |
+| 10 | 地点选择 — nearby, frequent, custom | `ui/screens/PlacePickerScreen.kt` |
+| 11 | 地图选点 | `ui/screens/MapPickerScreen.kt` |
+| 12 | 版本更新 | `ui/screens/UpdateScreen.kt` |
+
+Moods were part of the first revision of the design and were removed wholesale in
+the second, in favour of places. There is no `Mood` type left in the codebase.
 
 ## Build
 
@@ -87,6 +96,14 @@ a Markdown-file-backed store) touches one class and nothing else.
 - **Counters are computed.** 216 / 12 / 483 in the design are illustrative; the
   app counts real entries. The seed data is shaped so the streak really is 12.
 - **"Face ID" → "生物识别".** Both that row and 每日提醒 are display-only for now.
-- **No location.** The design's "家附近" would need location permission to be
-  honest, so the editor header shows the time only. Seed entries keep their
-  hand-written places.
+- **Text-only entries still render.** The design's subtitle now says "单图与多图两种"
+  and it cut the text-only sample card, but a diary cannot require a photo — the card
+  handles an empty photo list and `canPublish` accepts text alone.
+- **Three things are stubbed behind interfaces**, because each needs a key or an
+  endpoint this project does not have. All the UI around them is real:
+  - `PlaceSource` — 附近 places need a location permission plus a POI provider
+    (高德 / 百度 on this market). `StubPlaceSource` returns the design's list.
+  - `MapPickerScreen`'s map surface — the design itself labels it "系统地图接管渲染".
+    Dropping a `MapView` into `MapSurface` is the only change needed.
+  - `UpdateChecker` — there is no release feed yet; `StubUpdateChecker` returns the
+    design's sample release.
