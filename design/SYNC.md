@@ -19,8 +19,18 @@
 ## 同步步骤
 
 1. **授权**（首次或过期时）：在 Claude Code 里执行 `/design-login`。
-2. **拉取**：用 `DesignSync` 的 `get_file` 读 `Moodiary 设计稿.dc.html`，
-   覆盖写进本目录同名文件。
+2. **拉取**：用 `DesignSync` 的 `get_file` 读 `Moodiary 设计稿.dc.html`。
+   这个文件大到会触发工具输出落盘，返回里会给一个
+   `tool-results/*.txt` 路径——**用它，不要照着对话誊写**：
+
+   ```python
+   import json
+   o = json.load(open(TOOL_RESULT_TXT, encoding="utf-8"))
+   assert o.get("truncated") is not True
+   open("design/Moodiary 设计稿.dc.html", "w", encoding="utf-8", newline="").write(o["content"])
+   ```
+
+   这样快照是逐字节的，diff 里出现的每一行都是真的设计改动。
 3. **看差异**：`git diff design/` —— 只有真正改动的那几行会亮起来。
 4. **改代码**：按下面的映射表定位。
 5. **验证**：`./gradlew assembleDebug` + 真机装一遍，别只看编译过没过。
@@ -66,10 +76,13 @@
 看到它变了先别急着改 Android 代码，那是设备边框，本来就没移植
 （我们走的是 edge-to-edge + 真实系统 inset）。
 
-**快照怎么来的。** MCP 的读接口把文件内容返回到对话里，没有直写磁盘的通道，
-所以这份快照是照着接口返回誊写的，并按下列口径核对过——
-16 个色值及出现次数、9 个 rgba 值、16 档字号、6 个 `x-import` 屏、
-5 个 picsum 图种子、`moods` / `augEntries` / `seq` 三组脚本数据、
-以及全部示例日记正文。设计 token 层面可信。
-万一第一次 diff 出现某行「变了但看不出是什么设计改动」，
-那多半是誊写误差，以新拉的为准修掉快照即可。
+**快照怎么来的。** 首版是照着 MCP 返回誊写的，之后改用上面的落盘提取，逐字节可信。
+如果某次 diff 出现某行「变了但看不出是什么设计改动」，那是早期誊写的残留，
+以新拉的为准修掉即可。
+
+## 变更记录
+
+| 日期 | 设计侧变化 | 落到代码 |
+|---|---|---|
+| 2026-09-04 | 首版 6 屏 | 全量实现 |
+| 2026-09-04 | 心情体系整体移除、改为地点；新增 07–12 六屏；卡片间距与图片高度调整；底栏改不透明 | 见 `feat : 同步设计稿改版` 系列提交 |
