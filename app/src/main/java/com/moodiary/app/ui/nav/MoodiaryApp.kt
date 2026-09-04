@@ -178,8 +178,12 @@ fun MoodiaryApp(vm: DiaryViewModel = viewModel()) {
                         modifier = Modifier.statusBarsPadding(),
                         candidates = vm.pinPlaces,
                         selected = vm.pendingPlace,
-                        onBack = { pop() },
+                        onBack = {
+                            vm.cancelMapPick()
+                            pop()
+                        },
                         onSelect = vm::selectPlace,
+                        onCenterSettled = vm::resolvePin,
                         onConfirm = {
                             vm.commitPlace()
                             // Straight back to the editor: the map screen answers the
@@ -255,6 +259,7 @@ fun MoodiaryApp(vm: DiaryViewModel = viewModel()) {
             else -> {
                 if (stack.lastOrNull() == Overlay.Search) vm.clearSearch()
                 if (stack.lastOrNull() == Overlay.Editor) vm.clearDraft()
+                if (stack.lastOrNull() == Overlay.MapPicker) vm.cancelMapPick()
                 pop()
             }
         }

@@ -42,6 +42,7 @@ data/          日记模型、内存仓库、统计、Markdown 导出
 ui/theme/      Color.kt 和 Type.kt 是设计 token 的落点
 ui/components/ 卡片、胶囊、照片块、底部栏
 ui/screens/    十二屏，文件名对应设计稿编号（07/08/09 同在 DetailScreen.kt）
+ui/map/        自绘的 OSM 瓦片地图：投影、相机、瓦片缓存
 ui/nav/        MoodiaryApp.kt —— 四个 tab + 一个浮层back stack（最深三层：编辑→地点→地图）
 ```
 
@@ -62,9 +63,15 @@ ui/nav/        MoodiaryApp.kt —— 四个 tab + 一个浮层back stack（最�
 - "Face ID" 改成"生物识别"
 - 种子日记按「距今天数」锚定，不写死 2026 年 9 月
 - 纯文字日记仍然能写能显示（设计稿第二版把纯文字样例卡删了，但日记不能强制配图）
-- `PlaceSource` / `MapSurface` / `UpdateChecker` 三处是桩：附近地点要定位权限加
-  POI 服务商 key，地图要地图 SDK，更新要发布源，这个工程都没有。桩外面的 UI 是
-  真的，换实现只动这三处
+- 地图是真的，但没有地图 SDK：`ui/map/` 自己画 OpenStreetMap 栅格瓦片，无 key、
+  无依赖。**别换成高德/百度瓦片而不改坐标**——那两家是 GCJ-02，配系统定位给的
+  WGS-84 会让北京的针偏出几百米。详见 `ui/map/TileMap.kt` 的注释
+- 定位是可选的：没授权就开在默认中心（朝阳公园），提示行换成「没有定位权限」，
+  屏还是能用。用的是系统 `LocationManager`，**不要引 `play-services-location`**，
+  这批机器不一定有 GMS
+- `PlaceSource.nearby()` / `UpdateChecker` 两处还是桩：「附近」那种带距离的 POI
+  搜索要高德/百度的 key，更新要发布源，这个工程都没有。`atPin()` 不是桩，走系统
+  `Geocoder` 反查地名（机器上没有 geocoder 后端时退回坐标文本）
 
 ## 心情体系已经删了
 

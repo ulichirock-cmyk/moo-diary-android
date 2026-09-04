@@ -55,6 +55,11 @@
 | 04 搜索 | `ui/screens/SearchScreen.kt` |
 | 05 洞察 | `ui/screens/InsightsScreen.kt` |
 | 06 我的 | `ui/screens/ProfileScreen.kt` |
+| 07–09 详情 / 更多 / 删除确认 | `ui/screens/DetailScreen.kt` |
+| 10 地点选择 | `ui/screens/PlacePickerScreen.kt` |
+| 11 地图选点（屏本身） | `ui/screens/MapPickerScreen.kt` |
+| 地图瓦片、手势、缩放 | `ui/map/`（跟设计稿无关，设计稿只画了一块占位）|
+| 12 版本更新 | `ui/screens/UpdateScreen.kt` |
 | 示例日记内容 | `data/SeedData.kt` |
 
 ## 几件需要知道的事

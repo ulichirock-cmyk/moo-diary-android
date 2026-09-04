@@ -92,7 +92,10 @@
 
     <!-- 11 地图选点 -->
     <string name="map_title">地图选点</string>
-    <string name="map_placeholder">系统地图接管渲染</string>
+    <string name="map_attribution">© OpenStreetMap 贡献者</string>
+    <string name="map_locating">正在定位…</string>
+    <string name="map_no_location">没有定位权限，拖动地图选点</string>
+    <string name="map_resolving">正在识别位置…</string>
     <string name="map_hint">拖动地图可微调位置</string>
     <string name="map_recenter">回到当前位置</string>
     <string name="map_use_place">用这个地点</string>

@@ -99,11 +99,24 @@ a Markdown-file-backed store) touches one class and nothing else.
 - **Text-only entries still render.** The design's subtitle now says "单图与多图两种"
   and it cut the text-only sample card, but a diary cannot require a photo — the card
   handles an empty photo list and `canPublish` accepts text alone.
-- **Three things are stubbed behind interfaces**, because each needs a key or an
+- **The map is hand-drawn, not an SDK.** The design labels screen 11's map area
+  "系统地图接管渲染"; `ui/map/` renders OpenStreetMap raster tiles directly in a
+  Compose `Canvas` — Web Mercator, pan, pinch and double-tap zoom, a three-level
+  parent-tile fallback while a zoom loads, and a small disk cache. No API key and no
+  map dependency. 高德 / 百度 tiles were the alternative and were not taken: they are
+  GCJ-02, so pairing them with the platform's WGS-84 fixes would put the pin a few
+  hundred metres off in China. Tiles carry the required attribution and a real
+  User-Agent — OSM answers a generic one with a "please identify yourself" image.
+- **Location is optional.** Screen 11 opens on the device position when the
+  permission is already there, asks only when 回到当前位置 is tapped, and otherwise
+  opens on a default centre with the hint line saying so. Built on the platform
+  `LocationManager`, deliberately not on `play-services-location`, which would fail
+  exactly on the phones this app targets.
+- **Two things are still stubbed behind interfaces**, because each needs a key or an
   endpoint this project does not have. All the UI around them is real:
-  - `PlaceSource` — 附近 places need a location permission plus a POI provider
-    (高德 / 百度 on this market). `StubPlaceSource` returns the design's list.
-  - `MapPickerScreen`'s map surface — the design itself labels it "系统地图接管渲染".
-    Dropping a `MapView` into `MapSurface` is the only change needed.
+  - `PlaceSource.nearby()` — the 附近 list is POI search with distances, which needs
+    a 高德 / 百度 account. `StubPlaceSource` returns the design's list.
+    `PlaceSource.atPin()` is *not* a stub: it reverse-geocodes through the platform
+    `Geocoder`, and falls back to the coordinates when a device has no geocoder.
   - `UpdateChecker` — there is no release feed yet; `StubUpdateChecker` returns the
     design's sample release.

@@ -5,6 +5,11 @@
          system photo picker and need no storage permission. -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- 地图选点 opens on the device position when it can. Both are optional: the
+         screen falls back to a default centre and stays fully usable. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"

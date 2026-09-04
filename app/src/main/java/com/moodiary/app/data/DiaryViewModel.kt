@@ -1,11 +1,13 @@
 package com.moodiary.app.data
 
+import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -16,10 +18,11 @@ import java.time.YearMonth
  * entries plus a draft — and keeping it in one place is what lets the editor survive
  * being covered by the place picker and come back intact.
  */
-class DiaryViewModel : ViewModel() {
+class DiaryViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository: DiaryRepository = InMemoryDiaryRepository.shared
-    private val placeSource: PlaceSource = StubPlaceSource
+    // Reverse geocoding is a platform service, so it needs the application context.
+    private val placeSource: PlaceSource = GeocoderPlaceSource(application)
     private val updateChecker: UpdateChecker = StubUpdateChecker
 
     val entries get() = repository.entries
@@ -146,11 +149,37 @@ class DiaryViewModel : ViewModel() {
         viewModelScope.launch { nearbyPlaces = placeSource.nearby() }
     }
 
+    /**
+     * Selection to restore if the map is dismissed with 返回. Moving the pin overwrites
+     * [pendingPlace] — that is the whole point of the screen — so backing out of it has
+     * to be able to undo that.
+     */
+    private var placeBeforeMap: String? = null
+    private var pinJob: Job? = null
+
     fun openMapPicker() {
-        viewModelScope.launch {
-            pinPlaces = placeSource.atPin()
-            if (pendingPlace == null) pendingPlace = pinPlaces.firstOrNull()?.name
+        placeBeforeMap = pendingPlace
+        pinPlaces = emptyList()
+    }
+
+    /**
+     * Names the coordinate under the pin. Called by 地图选点 once the camera has stopped
+     * moving, so a drag across the city geocodes once rather than sixty times.
+     */
+    fun resolvePin(lat: Double, lng: Double) {
+        pinJob?.cancel()
+        pinJob = viewModelScope.launch {
+            val places = placeSource.atPin(lat, lng)
+            pinPlaces = places
+            pendingPlace = places.firstOrNull()?.name ?: pendingPlace
         }
+    }
+
+    /** 返回 from the map: the pin never happened. */
+    fun cancelMapPick() {
+        pinJob?.cancel()
+        pendingPlace = placeBeforeMap
+        pinPlaces = emptyList()
     }
 
     fun onPlaceQueryChange(value: String) {

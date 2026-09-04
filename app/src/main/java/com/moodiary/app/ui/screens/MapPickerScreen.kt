@@ -1,5 +1,7 @@
 package com.moodiary.app.ui.screens
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -22,27 +24,45 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.moodiary.app.R
 import com.moodiary.app.data.PlaceSuggestion
+import com.moodiary.app.ui.map.GeoPoint
+import com.moodiary.app.ui.map.MapCameraState
+import com.moodiary.app.ui.map.TileMap
+import com.moodiary.app.ui.map.rememberMapCamera
 import com.moodiary.app.ui.theme.MoodiaryColors
 import com.moodiary.app.ui.theme.MoodiaryType
+import com.moodiary.app.util.LOCATION_PERMISSIONS
+import com.moodiary.app.util.deviceLocation
+import com.moodiary.app.util.hasLocationPermission
+import kotlinx.coroutines.launch
 
 /**
  * 11 地图选点 — drag the map, confirm the name at the bottom.
  *
- * The map surface is a placeholder. The design itself labels this area
- * "系统地图接管渲染", and a real one needs a provider SDK plus an API key (高德 /
- * 百度 on this market) that the project does not have. Everything around it — the pin,
- * the recenter button, the candidate list, the confirm button — is real, so dropping a
- * MapView into [MapSurface] is the only change needed.
+ * The map is real: [TileMap] draws OpenStreetMap raster tiles, the pin stays pinned to
+ * the centre of the viewport as the design draws it, and [onCenterSettled] hands the
+ * coordinate back to be named once the camera stops. See [TileMap] for why there is no
+ * map SDK behind it.
+ *
+ * Location is optional. Without the permission the map simply opens on a default
+ * position and the hint line says so — the screen still works, you just have to find
+ * the spot yourself.
  */
 @Composable
 fun MapPickerScreen(
@@ -51,8 +71,50 @@ fun MapPickerScreen(
     onBack: () -> Unit,
     onSelect: (String) -> Unit,
     onConfirm: () -> Unit,
+    onCenterSettled: (Double, Double) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val camera = rememberMapCamera(DEFAULT_CENTER)
+    var locating by remember { mutableStateOf(false) }
+    var permissionDenied by remember { mutableStateOf(false) }
+
+    suspend fun centreOnDevice() {
+        locating = true
+        val location = context.deviceLocation()
+        locating = false
+        if (location != null) {
+            // Moving the camera restarts the settle debounce, which names the new spot.
+            camera.moveTo(GeoPoint(location.latitude, location.longitude), maxOf(camera.zoom, 16f))
+        } else {
+            // Nothing moved, and the settle that would have named it was suppressed.
+            onCenterSettled(camera.center.lat, camera.center.lng)
+        }
+    }
+
+    val requestPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions(),
+    ) { granted ->
+        if (granted.values.any { it }) {
+            permissionDenied = false
+            scope.launch { centreOnDevice() }
+        } else {
+            permissionDenied = true
+        }
+    }
+
+    // Opening on the user's own position is the useful default, but only when that
+    // costs nothing — a permission dialog on arrival would be rude.
+    LaunchedEffect(Unit) {
+        if (context.hasLocationPermission()) centreOnDevice()
+    }
+
+    fun recenter() {
+        if (context.hasLocationPermission()) scope.launch { centreOnDevice() }
+        else requestPermission.launch(LOCATION_PERMISSIONS)
+    }
+
     Column(modifier.fillMaxSize()) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(start = 14.dp, end = 14.dp, top = 6.dp),
@@ -76,7 +138,14 @@ fun MapPickerScreen(
             Spacer(Modifier.width(48.dp))
         }
 
-        MapSurface(Modifier.weight(1f).fillMaxWidth())
+        MapSurface(
+            camera = camera,
+            // Naming the default centre while a fix is still arriving would put the
+            // wrong place under 用这个地点 for the second before the map jumps.
+            onCenterSettled = { if (!locating) onCenterSettled(it.lat, it.lng) },
+            onRecenter = ::recenter,
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+        )
 
         Column(
             modifier = Modifier
@@ -88,19 +157,27 @@ fun MapPickerScreen(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    selected ?: candidates.firstOrNull()?.name.orEmpty(),
+                    selected
+                        ?: candidates.firstOrNull()?.name
+                        ?: stringResource(R.string.map_resolving),
                     style = MoodiaryType.PlaceTitle,
                     color = MoodiaryColors.TextPrimary,
                 )
                 Text(
-                    stringResource(R.string.map_hint),
+                    stringResource(
+                        when {
+                            locating -> R.string.map_locating
+                            permissionDenied -> R.string.map_no_location
+                            else -> R.string.map_hint
+                        },
+                    ),
                     style = MoodiaryType.Meta,
                     color = MoodiaryColors.TextMuted,
                 )
             }
 
             val shape = RoundedCornerShape(10.dp)
-            Column(
+            if (candidates.isNotEmpty()) Column(
                 Modifier
                     .fillMaxWidth()
                     .clip(shape)
@@ -138,29 +215,49 @@ fun MapPickerScreen(
     }
 }
 
-/** Stand-in for the platform map view. See the class doc for why. */
+/**
+ * The map itself plus the three things the design draws on top of it: the fixed centre
+ * pin, the 回到当前位置 button, and — in the slot the design reserved for map chrome —
+ * the attribution the tile licence requires.
+ */
 @Composable
-private fun MapSurface(modifier: Modifier = Modifier) {
-    Box(modifier.background(MoodiaryColors.Canvas)) {
+private fun MapSurface(
+    camera: MapCameraState,
+    onCenterSettled: (GeoPoint) -> Unit,
+    onRecenter: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    TileMap(
+        camera = camera,
+        background = MoodiaryColors.Canvas,
+        onCameraSettled = onCenterSettled,
+        modifier = modifier,
+    ) {
         Row(
-            modifier = Modifier.align(Alignment.BottomStart).padding(16.dp),
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(16.dp)
+                .clip(RoundedCornerShape(6.dp))
+                .background(MoodiaryColors.Surface.copy(alpha = 0.82f))
+                .padding(horizontal = 7.dp, vertical = 3.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 painterResource(R.drawable.ic_map),
                 contentDescription = null,
                 tint = MoodiaryColors.TextMuted,
-                modifier = Modifier.size(14.dp),
+                modifier = Modifier.size(11.dp),
             )
-            Spacer(Modifier.width(7.dp))
+            Spacer(Modifier.width(5.dp))
             Text(
-                stringResource(R.string.map_placeholder),
+                stringResource(R.string.map_attribution),
                 style = MoodiaryType.Detail,
                 color = MoodiaryColors.TextMuted,
             )
         }
 
         // Pin plus its ground shadow, centred on the map like the design draws it.
+        // It does not move: the map slides underneath it.
         Column(
             modifier = Modifier.align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -188,7 +285,8 @@ private fun MapSurface(modifier: Modifier = Modifier) {
                 .size(40.dp)
                 .clip(buttonShape)
                 .background(MoodiaryColors.Surface)
-                .border(1.dp, MoodiaryColors.Border, buttonShape),
+                .border(1.dp, MoodiaryColors.Border, buttonShape)
+                .clickable(onClick = onRecenter),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
@@ -233,3 +331,9 @@ private fun CandidateRow(candidate: PlaceSuggestion, selected: Boolean, onClick:
         }
     }
 }
+
+/**
+ * Where the map opens when the device will not say where it is. 朝阳公园 — the place the
+ * sample entries keep going back to, so the screen looks like the design out of the box.
+ */
+private val DEFAULT_CENTER = GeoPoint(lat = 39.9450, lng = 116.4750)
