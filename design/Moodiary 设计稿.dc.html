@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=Noto+Serif+SC:wght@500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#EDE7DC;font-family:'Inter Tight',-apple-system,sans-serif;color:#1F1E1D;-webkit-font-smoothing:antialiased}
+a{color:#BC5A3C;text-decoration:none}a:hover{color:#D97757}
+::-webkit-scrollbar{width:0;height:0}
+</style>
+</helmet>
+<div style="display:flex;gap:56px;align-items:flex-start;padding:56px 64px 72px;width:max-content">
+  <div style="width:300px;flex:none;position:sticky;top:56px;display:flex;flex-direction:column;gap:16px;padding-top:44px">
+    <div style="display:flex;align-items:center;gap:10px">
+      <img src="assets/claude-mark.svg" alt="" style="width:20px;height:20px">
+      <span style="font-family:'Source Serif 4','Noto Serif SC',serif;font-size:26px;font-weight:500;letter-spacing:-0.02em">moodiary</span>
+    </div>
+    <p style="margin:0;font-size:14px;line-height:1.65;color:#46443F">每天记录日常的私人日记 App——像 ins 一样发图配文,但只写给自己。通过 MCP 让 Claude Code 读取日记,生成情绪趋势、主题总结与每周回顾。</p>
+    <div style="background:#FAF7F2;border:1px solid rgba(31,30,29,0.08);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;box-shadow:0 1px 2px rgba(31,30,29,0.04)">
+      <span style="font-size:11px;letter-spacing:0.04em;text-transform:uppercase;color:#6B675F;font-weight:600">设计约定</span>
+      <ul style="margin:0;padding-left:16px;font-size:13px;line-height:1.7;color:#46443F">
+        <li>纯私人:无关注、点赞、评论</li>
+        <li>信息流单列卡片,图文混排</li>
+        <li>Claude 读取默认开启,无需开关</li>
+        <li>导出 Markdown 入口在「我的」</li>
+        <li>静态设计稿,共 6 屏,可平移缩放</li>
+      </ul>
+    </div>
+    <div style="background:#FAF7F2;border:1px solid rgba(31,30,29,0.08);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:8px;box-shadow:0 1px 2px rgba(31,30,29,0.04)">
+      <span style="font-size:11px;letter-spacing:0.04em;text-transform:uppercase;color:#6B675F;font-weight:600">屏幕索引</span>
+      <div style="display:flex;flex-direction:column;gap:6px;font-size:13px;line-height:1.5;color:#46443F">
+        <span><a href="#s1">01 时间线</a> · 每日记录流</span>
+        <span><a href="#s2">02 发布</a> · 写图文日记</span>
+        <span><a href="#s3">03 日历</a> · 按月回顾</span>
+        <span><a href="#s4">04 搜索</a> · 全文与标签</span>
+        <span><a href="#s5">05 洞察</a> · Claude 分析</span>
+        <span><a href="#s6">06 我的</a> · 统计 / 导出</span>
+      </div>
+    </div>
+    <span style="font-size:12px;color:#8C8579;line-height:1.7">来源仓库:ulichirock-cmyk/moodiary(develop)。下一步:接入仓库真实数据结构 · 可交互原型 · 深色模式。</span>
+  </div>
+
+  <div id="s1" style="display:flex;flex-direction:column;gap:12px;flex:none">
+    <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13px;font-weight:600;color:#1F1E1D">01 时间线</span><span style="font-size:12px;color:#8C8579">图卡、多图、纯文字三种日记形态</span></div>
+    <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
+      <div style="height:100%;display:flex;flex-direction:column;background:#F5F1EB;position:relative;font-family:'Inter Tight',-apple-system,sans-serif">
+        <div style="flex:1;overflow:hidden;padding:64px 0 0">
+          <div style="padding:8px 20px 4px;display:flex;align-items:center;gap:12px">
+            <span style="font-family:'Source Serif 4','Noto Serif SC',serif;font-size:25px;font-weight:500;letter-spacing:-0.02em;color:#1F1E1D">moodiary</span>
+            <span style="font-size:12px;color:#8C8579;padding-top:4px">9月2日 · 周三</span>
+            <div style="flex:1"></div>
+            <div style="display:flex;align-items:center;gap:6px;background:#F5E6DD;border-radius:999px;padding:5px 12px" data-comment-anchor="14387a869d-div">
+              <span style="font-size:12px;font-weight:600;color:#BC5A3C">连续 12 天</span>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:14px;padding:12px 16px 0">
+            <div style="background:#FAF7F2;border:1px solid rgba(31,30,29,0.08);border-radius:14px;padding:16px;box-shadow:0 1px 2px rgba(31,30,29,0.04);display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="display:flex;flex-direction:column;align-items:center;width:38px;flex:none">
+                  <span style="font-family:'Source Serif 4','Noto Serif SC',serif;font-size:22px;font-weight:600;line-height:1.1;color:#1F1E1D">02</span>
+                  <span style="font-size:10px;color:#8C8579;letter-spacing:0.06em">九月</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:1px">
+                  <span style="font-size:13px;font-weight:600;color:#46443F">周三</span>
+                  <span style="font-size:11px;color:#8C8579">08:14</span>
+                </div>
+                <div style="flex:1"></div>
+                <div style="display:flex;align-items:center;gap:6px;border:1px solid rgba(31,30,29,0.14);border-radius:999px;padding:4px 10px" data-comment-anchor="9afa1e1929-div">
+                  <span style="font-size:11px;color:#46443F">平静</span>
+                </div>
+              </div>
+              <img src="https://picsum.photos/seed/mood-morning7/680/420" alt="窗边的早晨" style="width:100%;height:190px;object-fit:cover;border-radius:10px;filter:saturate(0.85);display:block;background:#EDE7DC">
+              <p style="margin:0;font-family:'Source Serif 4','Noto Serif SC',serif;font-size:15px;line-height:1.8;color:#1F1E1D">六点半醒,楼下的桂花开了第一茬。给自己煮了燕麦,窗边写了半小时晨间笔记。九月,慢慢来。</p>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:11px;color:#BC5A3C;background:rgba(217,119,87,0.09);border-radius:999px;padding:3px 9px">#晨间</span>
+                <span style="font-size:11px;color:#BC5A3C;background:rgba(217,119,87,0.09);border-radius:999px;padding:3px 9px">#桂花</span>
+                <div style="flex:1"></div>
+                <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#8C8579"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>家</span>
+              </div>
+            </div>
+            <div style="background:#FAF7F2;border:1px solid rgba(31,30,29,0.08);border-radius:14px;padding:16px;box-shadow:0 1px 2px rgba(31,30,29,0.04);display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="display:flex;flex-direction:column;align-items:center;width:38px;flex:none">
+                  <span style="font-family:'Source Serif 4','Noto Serif SC',serif;font-size:22px;font-weight:600;line-height:1.1;color:#1F1E1D">01</span>
+                  <span style="font-size:10px;color:#8C8579;letter-spacing:0.06em">九月</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:1px">
+                  <span style="font-size:13px;font-weight:600;color:#46443F">周二</span>
+                  <span style="font-size:11px;color:#8C8579">21:47</span>
+                </div>
+                <div style="flex:1"></div>
+                <div style="display:flex;align-items:center;gap:6px;border:1px solid rgba(31,30,29,0.14);border-radius:999px;padding:4px 10px" data-comment-anchor="e5dd7ebe98-div">
+                  <span style="font-size:11px;color:#46443F">充实</span>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                <img src="https://picsum.photos/seed/mood-desk3/400/320" alt="工位" style="width:100%;height:130px;object-fit:cover;border-radius:10px;filter:saturate(0.85);display:block;background:#EDE7DC">
+                <img src="https://picsum.photos/seed/mood-coffee5/400/320" alt="冰美式" style="width:100%;height:130px;object-fit:cover;border-radius:10px;filter:saturate(0.85);display:block;background:#EDE7DC">
+              </div>
+              <p style="margin:0;font-family:'Source Serif 4','Noto Serif SC',serif;font-size:15px;line-height:1.8;color:#1F1E1D">开学第一天的地铁挤回了熟悉的节奏。下午把拖了两周的方案初稿收尾,奖励自己一杯冰美式。</p>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:11px;color:#BC5A3C;background:rgba(217,119,87,0.09);border-radius:999px;padding:3px 9px">#工作</span>
+                <div style="flex:1"></div>
+                <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#8C8579"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>望京</span>
+              </div>
+            </div>
+            <div style="background:#FAF7F2;border:1px solid rgba(31,30,29,0.08);border-radius:14px;padding:16px;box-shadow:0 1px 2px rgba(31,30,29,0.04);display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="display:flex;flex-direction:column;align-items:center;width:38px;flex:none">
+                  <span style="font-family:'Source Serif 4','Noto Serif SC',serif;font-size:22px;font-weight:600;line-height:1.1;color:#1F1E1D">31</span>
+                  <span style="font-size:10px;color:#8C8579;letter-spacing:0.06em">八月</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:1px">
+                  <span style="font-size:13px;font-weight:600;color:#46443F">周一</span>
+                  <span style="font-size:11px;color:#8C8579">23:02</span>
+                </div>
+                <div style="flex:1"></div>
+                <div style="display:flex;align-items:center;gap:6px;border:1px solid rgba(31,30,29,0.14);border-radius:999px;padding:4px 10px">
+                  <span style="width:7px;height:7px;border-radius:50%;background:#C9C2B5"></span>
+                  <span style="font-size:11px;color:#46443F">疲惫</span>
+                </div>
+              </div>
+              <p style="margin:0;font-family:'Source Serif 4','Noto Serif SC',serif;font-size:15px;line-height:1.8;color:#1F1E1D">八月的最后一天,加班到十点。回家的地铁上把《夜晚的潜水艇》读完了,有几个句子想抄下来。</p>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:11px;color:#BC5A3C;background:rgba(217,119,87,0.09);border-radius:999px;padding:3px 9px">#阅读</span>
+                <span style="font-size:11px;color:#BC5A3C;background:rgba(217,119,87,0.09);border-radius:999px;padding:3px 9px">#加班</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="position:absolute;left:0;right:0;bottom:0;z-index:20;background:rgba(245,241,235,0.94);border-top:1px solid rgba(31,30,29,0.08);display:flex;align-items:center;justify-content:space-between;padding:10px 26px 28px">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#1F1E1D;width:52px"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9v12h14V9"></path></svg><span style="font-size:10px;font-weight:600">时间线</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#8C8579;width:52px"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg><span style="font-size:10px">日历</span></div>
+          <div style="width:48px;height:48px;border-radius:50%;background:#D97757;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(188,90,60,0.35);margin-top:-14px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#8C8579;width:52px"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c.7 3.9 2.5 5.7 6.5 6.5-4 .8-5.8 2.6-6.5 6.5-.7-3.9-2.5-5.7-6.5-6.5 4-.8 5.8-2.6 6.5-6.5Z"></path><path d="M18.5 15.5c.35 1.95 1.25 2.85 3 3.25-1.75.4-2.65 1.3-3 3.25-.35-1.95-1.25-2.85-3-3.25 1.75-.4 2.65-1.3 3-3.25Z"></path></svg><span style="font-size:10px">洞察</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#8C8579;width:52px"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c.8-3.8 4-6 8-6s7.2 2.2 8 6"></path></svg><span style="font-size:10px">我的</span></div>
+        </div>
+      </div>
+    </x-import>
+  </div>
+
+  <div id="s2" style="display:flex;flex-direction:column;gap:12px;flex:none">
+    <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13px;font-weight:600;color:#1F1E1D">02 发布 / 编辑</span><span style="font-size:12px;color:#8C8579">先写字,再配图、选心情、打标签</span></div>
+    <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
+      <div style="height:100%;display:flex;flex-direction:column;background:#F5F1EB;position:relative;font-family:'Inter Tight',-apple-system,sans-serif">
+        <div style="flex:1;overflow:hidden;padding:64px 0 0;display:flex;flex-direction:column">
+          <div style="display:flex;align-items:center;padding:8px 20px 4px">
+            <span style="font-size:14px;color:#6B675F">取消</span>
+            <div style="flex:1;text-align:center;display:flex;flex-direction:column;gap:0">
+              <span style="font-size:14px;font-weight:600;color:#1F1E1D">9月2日 周三</span>
+              <span style="font-size:11px;color:#8C8579">18:32 · 家附近</span>
+            </div>
+            <span style="background:#D97757;color:#FFFFFF;font-size:13px;font-weight:600;border-radius:999px;padding:7px 16px">发布</span>
+          </div>
+          <div style="padding:16px 20px 0;display:flex;flex-direction:column;gap:16px">
+            <p style="margin:0;font-family:'Source Serif 4','Noto Serif SC',serif;font-size:16px;line-height:1.9;color:#1F1E1D;min-height:120px">和小七去朝阳公园野餐,她带的柠檬茶,我带的三明治。草地上一直躺到太阳偏西<span style="display:inline-block;width:2px;height:18px;background:#D97757;vertical-align:-3px"></span></p>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+              <img src="https://picsum.photos/seed/mood-picnic2/300/300" alt="野餐" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;filter:saturate(0.85);display:block;background:#EDE7DC">
+              <img src="https://picsum.photos/seed/mood-park9/300/300" alt="公园草地" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;filter:saturate(0.85);display:block;background:#EDE7DC">
+              <div style="aspect-ratio:1;border:1.5px dashed rgba(31,30,29,0.2);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:#8C8579">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="15" rx="2"></rect><circle cx="9" cy="10" r="1.6"></circle><path d="m5 20 5.5-5.5L14 18l3-3 4 4"></path></svg>
+                <span style="font-size:10.5px">添加照片</span>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:9px" data-comment-anchor="7c7095919c-div">
+              <span style="font-size:11px;letter-spacing:0.04em;text-transform:uppercase;color:#8C8579;font-weight:600">今天的心情</span>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <span style="display:inline-flex;align-items:center;gap:6px;border:1.5px solid #D97757;background:#F5E6DD;border-radius:999px;padding:6px 13px;font-size:12.5px;font-weight:600;color:#BC5A3C">开心</span>
+                <span style="display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(31,30,29,0.14);border-radius:999px;padding:6px 13px;font-size:12.5px;color:#46443F">平静</span>
+                <span style="display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(31,30,29,0.14);border-radius:999px;padding:6px 13px;font-size:12.5px;color:#46443F">充实</span>
+                <span style="display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(31,30,29,0.14);border-radius:999px;padding:6px 13px;font-size:12.5px;color:#46443F">疲惫</span>
+                <span style="display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(31,30,29,0.14);border-radius:999px;padding:6px 13px;font-size:12.5px;color:#46443F">焦虑</span>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <span style="font-size:11px;letter-spacing:0.04em;text-transform:uppercase;color:#8C8579;font-weight:600">标签</span>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <span style="border:1px solid rgba(217,119,87,0.5);background:rgba(217,119,87,0.09);border-radius:999px;padding:5px 12px;font-size:12px;color:#BC5A3C">#周末</span>
+                <span style="border:1px solid rgba(217,119,87,0.5);background:rgba(217,119,87,0.09);border-radius:999px;padding:5px 12px;font-size:12px;color:#BC5A3C">#朋友</span>
+                <span style="border:1px solid rgba(31,30,29,0.14);border-radius:999px;padding:5px 12px;font-size:12px;color:#6B675F">#美食</span>
+                <span style="border:1px solid rgba(31,30,29,0.14);border-radius:999px;padding:5px 12px;font-size:12px;color:#6B675F">#阅读</span>
+                <span style="border:1px dashed rgba(31,30,29,0.2);border-radius:999px;padding:5px 12px;font-size:12px;color:#8C8579">+ 新标签</span>
+              </div>
+            </div>
+          </div>
+          <div style="flex:1"></div>
+          <div style="padding:0 20px 46px;display:flex;align-items:center;gap:6px;color:#8C8579">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+            <span style="font-size:12px">草稿已自动保存 · 仅保存在本机</span>
+          </div>
+        </div>
+      </div>
+    </x-import>
+  </div>
+
+  <div id="s3" style="display:flex;flex-direction:column;gap:12px;flex:none">
+    <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13px;font-weight:600;color:#1F1E1D">03 日历回顾</span><span style="font-size:12px;color:#8C8579">有记录的日子带心情色点,点选查看</span></div>
+    <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
+      <div style="height:100%;display:flex;flex-direction:column;background:#F5F1EB;position:relative;font-family:'Inter Tight',-apple-system,sans-serif">
+        <div style="flex:1;overflow:hidden;padding:64px 0 0">
+          <div style="padding:8px 20px 4px;display:flex;align-items:baseline;gap:12px">
+            <span style="font-family:'Source Serif 4','Noto Serif SC',serif;font-size:25px;font-weight:500;color:#1F1E1D">日历</span>
+            <span style="font-size:12px;color:#8C8579">2026 年 9 月</span>
+            <div style="flex:1"></div>
+            <span style="font-size:12px;color:#8C8579">本月已记 2 天</span>
+          </div>
+          <div style="margin:12px 16px 0;background:#FAF7F2;border:1px solid rgba(31,30,29,0.08);border-radius:14px;padding:14px;box-shadow:0 1px 2px rgba(31,30,29,0.04)">
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px">
+              <sc-for list="{{ weekLabels }}" as="w" hint-placeholder-count="7"><span style="text-align:center;font-size:11px;color:#8C8579;padding:4px 0">{{ w }}</span></sc-for>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px">
+              <sc-for list="{{ calDays }}" as="d" hint-placeholder-count="35">
+                <div style="height:45px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-radius:10px;background:{{ d.bg }}">
+                  <span style="font-size:14px;font-weight:{{ d.weight }};color:{{ d.color }}">{{ d.label }}</span>
+                  <span style="width:4px;height:4px;border-radius:50%;background:{{ d.dot }}"></span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="padding:18px 20px 8px;display:flex;align-items:baseline;gap:10px">
+            <span style="font-size:14px;font-weight:600;color:#1F1E1D">8月31日 周一</span>
+            <span style="font-size:12px;color:#8C8579">1 条记录</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;padding:0 16px">
+            <div style="background:#FAF7F2;border:1px solid rgba(31,30,29,0.08);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center">
+              <div style="display:flex;flex-direction:column;gap:3px;min-width:0;flex:1">
+                <div style="display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:#C9C2B5"></span><span style="font-size:11px;color:#8C8579">23:02 · 疲惫</span></div>
+                <span style="font-size:13px;color:#1F1E1D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">八月的最后一天,加班到十点。回家的地铁上把《夜晚的潜水艇》读完了…</span>
+              </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8C8579" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="m9 6 6 6-6 6"></path></svg>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:6px 4px">
+              <span style="font-size:12px;color:#8C8579">心情图例</span>
+              <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#6B675F"><span style="width:6px;height:6px;border-radius:50%;background:#B8D9B8"></span>开心</span>
+              <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#6B675F"><span style="width:6px;height:6px;border-radius:50%;background:#B8D0E8"></span>平静</span>
+              <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#6B675F"><span style="width:6px;height:6px;border-radius:50%;background:#F5E08C"></span>充实</span>
+              <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#6B675F"><span style="width:6px;height:6px;border-radius:50%;background:#C9C2B5"></span>疲惫</span>
+              <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#6B675F"><span style="width:6px;height:6px;border-radius:50%;background:#F2B8A1"></span>焦虑</span>
+            </div>
+          </div>
+        </div>
+        <div style="position:absolute;left:0;right:0;bottom:0;z-index:20;background:rgba(245,241,235,0.94);border-top:1px solid rgba(31,30,29,0.08);display:flex;align-items:center;justify-content:space-between;padding:10px 26px 28px">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#8C8579;width:52px"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9v12h14V9"></path></svg><span style="font-size:10px">时间线</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#1F1E1D;width:52px"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg><span style="font-size:10px;font-weight:600">日历</span></div>
+          <div style="width:48px;height:48px;border-radius:50%;background:#D97757;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(188,90,60,0.35);margin-top:-14px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#8C8579;width:52px"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c.7 3.9 2.5 5.7 6.5 6.5-4 .8-5.8 2.6-6.5 6.5-.7-3.9-2.5-5.7-6.5-6.5 4-.8 5.8-2.6 6.5-6.5Z"></path><path d="M18.5 15.5c.35 1.95 1.25 2.85 3 3.25-1.75.4-2.65 1.3-3 3.25-.35-1.95-1.25-2.85-3-3.25 1.75-.4 2.65-1.3 3-3.25Z"></path></svg><span style="font-size:10px">洞察</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#8C8579;width:52px"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c.8-3.8 4-6 8-6s7.2 2.2 8 6"></path></svg><span style="font-size:10px">我的</span></div>
+        </div>
+      </div>
+    </x-import>
+  </div>
+
+  <div id="s4" style="display:flex;flex-direction:column;gap:12px;flex:none">
+    <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13px;font-weight:600;color:#1F1E1D">04 搜索 / 标签</span><span style="font-size:12px;color:#8C8579">全文检索,标签即入口</span></div>
+    <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
+      <div style="height:100%;display:flex;flex-direction:column;background:#F5F1EB;position:relative;font-family:'Inter Tight',-apple-system,sans-serif">
+        <div style="flex:1;overflow:hidden;padding:64px 0 0">
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 20px 4px">
+            <div style="flex:1;display:flex;align-items:center;gap:8px;background:#FFFFFF;border:1px solid rgba(31,30,29,0.14);border-radius:999px;padding:9px 14px">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8C8579" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
+              <span style="font-size:14px;color:#1F1E1D">咖啡</span>
+              <span style="display:inline-block;width:1.5px;height:16px;background:#D97757"></span>
+            </div>
+            <span style="font-size:14px;color:#6B675F">取消</span>
+          </div>
+          <div style="padding:14px 20px 8px"><span style="font-size:12px;color:#8C8579">6 条日记提到「咖啡」</span></div>
+          <div style="display:flex;flex-direction:column;gap:10px;padding:0 16px">
+            <div style="background:#FAF7F2;border:1px solid rgba(31,30,29,0.08);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center">
+              <img src="https://picsum.photos/seed/mood-coffee5/160/160" alt="" style="width:46px;height:46px;border-radius:8px;object-fit:cover;flex:none;filter:saturate(0.85);background:#EDE7DC">
+              <div style="display:flex;flex-direction:column;gap:3px;min-width:0;flex:1">
+                <span style="font-size:11px;color:#8C8579">9月1日 · 充实</span>
+                <span style="font-size:13px;color:#1F1E1D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">…收尾,奖励自己一杯冰<span style="background:#F5E08C;border-radius:3px;padding:0 2px">咖啡</span>美式。</span>
+              </div>
+            </div>
+            <div style="background:#FAF7F2;border:1px solid rgba(31,30,29,0.08);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center">
+              <div style="display:flex;flex-direction:column;gap:3px;min-width:0;flex:1">
+                <span style="font-size:11px;color:#8C8579">8月28日 · 开心</span>
+                <span style="font-size:13px;color:#1F1E1D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">巷口新开的手冲店,耶加雪菲带一点柑橘,和<span style="background:#F5E08C;border-radius:3px;padding:0 2px">咖啡</span>师聊了很久…</span>
+              </div>
+            </div>
+            <div style="background:#FAF7F2;border:1px solid rgba(31,30,29,0.08);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center">
+              <div style="display:flex;flex-direction:column;gap:3px;min-width:0;flex:1">
+                <span style="font-size:11px;color:#8C8579">8月24日 · 平静</span>
+                <span style="font-size:13px;color:#1F1E1D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">雨天,在家做了壶手冲<span style="background:#F5E08C;border-radius:3px;padding:0 2px">咖啡</span>,听了一下午黑胶。</span>
+              </div>
+            </div>
+          </div>
+          <div style="padding:22px 20px 10px"><span style="font-size:11px;letter-spacing:0.04em;text-transform:uppercase;color:#8C8579;font-weight:600">常用标签</span></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;padding:0 20px">
+            <span style="border:1px solid rgba(31,30,29,0.14);border-radius:999px;padding:6px 13px;font-size:12.5px;color:#46443F">#工作 <span style="color:#8C8579">23</span></span>
+            <span style="border:1px solid rgba(31,30,29,0.14);border-radius:999px;padding:6px 13px;font-size:12.5px;color:#46443F">#阅读 <span style="color:#8C8579">18</span></span>
+            <span style="border:1px solid rgba(31,30,29,0.14);border-radius:999px;padding:6px 13px;font-size:12.5px;color:#46443F">#周末 <span style="color:#8C8579">14</span></span>
+            <span style="border:1px solid rgba(31,30,29,0.14);border-radius:999px;padding:6px 13px;font-size:12.5px;color:#46443F">#晨间 <span style="color:#8C8579">12</span></span>
+            <span style="border:1px solid rgba(31,30,29,0.14);border-radius:999px;padding:6px 13px;font-size:12.5px;color:#46443F">#美食 <span style="color:#8C8579">9</span></span>
+            <span style="border:1px solid rgba(31,30,29,0.14);border-radius:999px;padding:6px 13px;font-size:12.5px;color:#46443F">#加班 <span style="color:#8C8579">7</span></span>
+            <span style="border:1px solid rgba(31,30,29,0.14);border-radius:999px;padding:6px 13px;font-size:12.5px;color:#46443F">#跑步 <span style="color:#8C8579">6</span></span>
+            <span style="border:1px solid rgba(31,30,29,0.14);border-radius:999px;padding:6px 13px;font-size:12.5px;color:#46443F">#朋友 <span style="color:#8C8579">5</span></span>
+          </div>
+        </div>
+      </div>
+    </x-import>
+  </div>
+
+  <div id="s5" style="display:flex;flex-direction:column;gap:12px;flex:none">
+    <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13px;font-weight:600;color:#1F1E1D">05 洞察 · Claude 分析</span><span style="font-size:12px;color:#8C8579">每周回顾 + 情绪趋势 + 主题总结</span></div>
+    <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
+      <div style="height:100%;display:flex;flex-direction:column;background:#F5F1EB;position:relative;font-family:'Inter Tight',-apple-system,sans-serif">
+        <div style="flex:1;overflow:hidden;padding:64px 0 0">
+          <div style="padding:8px 20px 4px;display:flex;align-items:baseline;gap:12px">
+            <span style="font-family:'Source Serif 4','Noto Serif SC',serif;font-size:25px;font-weight:500;color:#1F1E1D">洞察</span>
+          </div>
+          <div style="margin:12px 16px 0;background:#FAF7F2;border:1px solid rgba(31,30,29,0.08);border-radius:14px;padding:18px;box-shadow:0 1px 2px rgba(31,30,29,0.04);display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <img src="assets/claude-mark.svg" alt="Claude" style="width:16px;height:16px">
+              <span style="font-family:'Source Serif 4','Noto Serif SC',serif;font-size:17px;font-weight:600;color:#1F1E1D">每周回顾</span>
+              <div style="flex:1"></div>
+              <span style="font-size:11px;color:#8C8579">8.24 – 8.30</span>
+            </div>
+            <p style="margin:0;font-family:'Source Serif 4','Noto Serif SC',serif;font-size:14.5px;line-height:1.85;color:#1F1E1D">这一周你写下 6 篇日记、11 张照片。情绪整体平稳向上——周日和小七的野餐是本周的情绪峰值,周一的加班是唯一低点。「阅读」已连续三周出现在你的夜晚,或许值得给它一个固定的时段。</p>
+            <span style="font-size:11px;color:#8C8579">基于 6 篇日记 · 每周一 8:00 自动生成</span>
+          </div>
+          <div style="margin:14px 16px 0;background:#FAF7F2;border:1px solid rgba(31,30,29,0.08);border-radius:14px;padding:18px;box-shadow:0 1px 2px rgba(31,30,29,0.04);display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:13px;font-weight:600;color:#1F1E1D">近 14 天情绪</span><span style="font-size:11px;color:#8C8579">按当日主导心情着色</span></div>
+            <div style="display:flex;align-items:flex-end;gap:5px;height:72px">
+              <sc-for list="{{ moodBars }}" as="b" hint-placeholder-count="14"><div style="flex:1;height:{{ b.h }}px;border-radius:4px 4px 2px 2px;background:{{ b.c }}"></div></sc-for>
+            </div>
+            <div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:#8C8579">8.20</span><span style="font-size:10px;color:#8C8579">今天</span></div>
+          </div>
+          <div style="margin:14px 16px 0;background:#FAF7F2;border:1px solid rgba(31,30,29,0.08);border-radius:14px;padding:18px;box-shadow:0 1px 2px rgba(31,30,29,0.04);display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <span style="background:#EDE7DC;border-radius:999px;padding:6px 13px;font-size:12.5px;color:#1F1E1D;font-weight:600">咖啡 ×6</span>
+              <span style="background:#EDE7DC;border-radius:999px;padding:6px 13px;font-size:12.5px;color:#1F1E1D">阅读 ×5</span>
+              <span style="background:#EDE7DC;border-radius:999px;padding:6px 13px;font-size:12.5px;color:#1F1E1D">加班 ×4</span>
+              <span style="background:#EDE7DC;border-radius:999px;padding:6px 13px;font-size:12.5px;color:#1F1E1D">朋友 ×3</span>
+              <span style="background:#EDE7DC;border-radius:999px;padding:6px 13px;font-size:12.5px;color:#1F1E1D">跑步 ×2</span>
+            </div>
+            <span style="font-size:12px;color:#6B675F;line-height:1.6">「加班」多出现在周一与周四,常与「疲惫」同日;「咖啡」之后的日记平均更长。</span>
+          </div>
+        </div>
+        <div style="position:absolute;left:0;right:0;bottom:0;z-index:20;background:rgba(245,241,235,0.94);border-top:1px solid rgba(31,30,29,0.08);display:flex;align-items:center;justify-content:space-between;padding:10px 26px 28px">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#8C8579;width:52px"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9v12h14V9"></path></svg><span style="font-size:10px">时间线</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#8C8579;width:52px"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg><span style="font-size:10px">日历</span></div>
+          <div style="width:48px;height:48px;border-radius:50%;background:#D97757;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(188,90,60,0.35);margin-top:-14px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#1F1E1D;width:52px"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c.7 3.9 2.5 5.7 6.5 6.5-4 .8-5.8 2.6-6.5 6.5-.7-3.9-2.5-5.7-6.5-6.5 4-.8 5.8-2.6 6.5-6.5Z"></path><path d="M18.5 15.5c.35 1.95 1.25 2.85 3 3.25-1.75.4-2.65 1.3-3 3.25-.35-1.95-1.25-2.85-3-3.25 1.75-.4 2.65-1.3 3-3.25Z"></path></svg><span style="font-size:10px;font-weight:600">洞察</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#8C8579;width:52px"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c.8-3.8 4-6 8-6s7.2 2.2 8 6"></path></svg><span style="font-size:10px">我的</span></div>
+        </div>
+      </div>
+    </x-import>
+  </div>
+
+  <div id="s6" style="display:flex;flex-direction:column;gap:12px;flex:none">
+    <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13px;font-weight:600;color:#1F1E1D">06 我的 · 统计 / 导出</span><span style="font-size:12px;color:#8C8579">统计、导出 Markdown、提醒与应用锁</span></div>
+    <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
+      <div style="height:100%;display:flex;flex-direction:column;background:#F5F1EB;position:relative;font-family:'Inter Tight',-apple-system,sans-serif">
+        <div style="flex:1;overflow:hidden;padding:64px 0 0">
+          <div style="display:flex;align-items:center;gap:14px;padding:14px 20px 0">
+            <div style="width:58px;height:58px;border-radius:50%;background:#F5E6DD;display:flex;align-items:center;justify-content:center;flex:none"><span style="font-family:'Source Serif 4','Noto Serif SC',serif;font-size:24px;font-weight:600;color:#BC5A3C">念</span></div>
+            <div style="display:flex;flex-direction:column;gap:2px">
+              <span style="font-size:18px;font-weight:600;color:#1F1E1D">念念</span>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:18px 16px 0">
+            <div style="background:#FAF7F2;border:1px solid rgba(31,30,29,0.08);border-radius:12px;padding:14px 0;display:flex;flex-direction:column;align-items:center;gap:2px"><span style="font-family:'Source Serif 4','Noto Serif SC',serif;font-size:22px;font-weight:600;color:#1F1E1D">216</span><span style="font-size:11px;color:#8C8579">篇日记</span></div>
+            <div style="background:#FAF7F2;border:1px solid rgba(31,30,29,0.08);border-radius:12px;padding:14px 0;display:flex;flex-direction:column;align-items:center;gap:2px"><span style="font-family:'Source Serif 4','Noto Serif SC',serif;font-size:22px;font-weight:600;color:#BC5A3C">12</span><span style="font-size:11px;color:#8C8579">连续天数</span></div>
+            <div style="background:#FAF7F2;border:1px solid rgba(31,30,29,0.08);border-radius:12px;padding:14px 0;display:flex;flex-direction:column;align-items:center;gap:2px"><span style="font-family:'Source Serif 4','Noto Serif SC',serif;font-size:22px;font-weight:600;color:#1F1E1D">483</span><span style="font-size:11px;color:#8C8579">张照片</span></div>
+          </div>
+          <div style="padding:22px 20px 8px"><span style="font-size:11px;letter-spacing:0.04em;text-transform:uppercase;color:#8C8579;font-weight:600">数据</span></div>
+          <div style="margin:0 16px;background:#FAF7F2;border:1px solid rgba(31,30,29,0.08);border-radius:14px;box-shadow:0 1px 2px rgba(31,30,29,0.04)">
+            <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid rgba(31,30,29,0.08)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B675F" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M12 3v12m0 0 4-4m-4 4-4-4"></path><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"></path></svg>
+              <div style="display:flex;flex-direction:column;gap:2px;flex:1">
+                <span style="font-size:14px;font-weight:600;color:#1F1E1D">导出 Markdown</span>
+              </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8C8579" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="m9 6 6 6-6 6"></path></svg>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid rgba(31,30,29,0.08)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B675F" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg>
+              <span style="font-size:14px;color:#1F1E1D;flex:1">每日提醒</span>
+              <span style="font-size:13px;color:#8C8579">22:00</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8C8579" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="m9 6 6 6-6 6"></path></svg>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:14px 16px">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B675F" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><rect x="4" y="10" width="16" height="11" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>
+              <span style="font-size:14px;color:#1F1E1D;flex:1">应用锁</span>
+              <span style="font-size:13px;color:#8C8579">Face ID</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8C8579" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="m9 6 6 6-6 6"></path></svg>
+            </div>
+          </div>
+        </div>
+        <div style="position:absolute;left:0;right:0;bottom:0;z-index:20;background:rgba(245,241,235,0.94);border-top:1px solid rgba(31,30,29,0.08);display:flex;align-items:center;justify-content:space-between;padding:10px 26px 28px">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#8C8579;width:52px"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9v12h14V9"></path></svg><span style="font-size:10px">时间线</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#8C8579;width:52px"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg><span style="font-size:10px">日历</span></div>
+          <div style="width:48px;height:48px;border-radius:50%;background:#D97757;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(188,90,60,0.35);margin-top:-14px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#8C8579;width:52px"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c.7 3.9 2.5 5.7 6.5 6.5-4 .8-5.8 2.6-6.5 6.5-.7-3.9-2.5-5.7-6.5-6.5 4-.8 5.8-2.6 6.5-6.5Z"></path><path d="M18.5 15.5c.35 1.95 1.25 2.85 3 3.25-1.75.4-2.65 1.3-3 3.25-.35-1.95-1.25-2.85-3-3.25 1.75-.4 2.65-1.3 3-3.25Z"></path></svg><span style="font-size:10px">洞察</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#1F1E1D;width:52px"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c.8-3.8 4-6 8-6s7.2 2.2 8 6"></path></svg><span style="font-size:10px;font-weight:600">我的</span></div>
+        </div>
+      </div>
+    </x-import>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const moods = { happy:'#B8D9B8', calm:'#B8D0E8', full:'#F5E08C', tired:'#C9C2B5', anxious:'#F2B8A1' };
+    // September 2026, Monday-start grid (Sep 1 = Tuesday)
+    const entryDays = { '-31':'tired', '1':'full', '2':'calm' }; // -31 = Aug 31
+    const augEntries = { 24:'calm', 25:'happy', 26:'full', 28:'happy', 29:'calm', 30:'happy' };
+    const days = [];
+    days.push({ label:'31', aug:true, mood:'tired' });
+    for (let d=1; d<=30; d++) days.push({ label:String(d), mood: d===1?'full':(d===2?'calm':null), future:d>2 });
+    for (let d=1; d<=4; d++) days.push({ label:String(d), aug:true, oct:true });
+    const calDays = days.map(c => {
+      const isToday = !c.aug && c.label==='2';
+      return {
+        label: c.label,
+        bg: isToday ? '#D97757' : 'transparent',
+        color: isToday ? '#FFFFFF' : (c.aug || c.future ? '#C9C2B5' : '#1F1E1D'),
+        weight: isToday ? '600' : '400',
+        dot: isToday ? 'rgba(255,255,255,0.9)' : (c.mood ? moods[c.mood] : (c.aug && !c.oct ? '#C9C2B5' : 'transparent')),
+      };
+    });
+    const seq = [['calm',38],['happy',46],['tired',26],['full',52],['calm',44],['happy',60],['happy',48],['calm',36],['anxious',24],['full',42],['happy',50],['tired',28],['full',54],['calm',58]];
+    return {
+      weekLabels: ['一','二','三','四','五','六','日'],
+      calDays,
+      moodBars: seq.map(([m,h]) => ({ h, c: moods[m] })),
+    };
+  }
+}
+</script>
+</body>
+</html>

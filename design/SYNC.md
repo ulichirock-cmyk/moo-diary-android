@@ -1,0 +1,72 @@
+# 设计稿同步
+
+这个目录是 Claude Design 画布项目《Moodiary 日记应用设计》的**源码快照**。
+它不参与编译，唯一的用途是：设计稿更新时，先把新版拉下来覆盖这里，
+`git diff` 就直接告诉你改了哪几行，不用整篇重读四万多字的 HTML。
+
+## 项目坐标
+
+| | |
+|---|---|
+| 项目 ID | `b270202f-0b14-42df-9cae-e15fa11b1aea` |
+| 名称 | Moodiary 日记应用设计 |
+| 画布链接 | https://claude.ai/design/p/b270202f-0b14-42df-9cae-e15fa11b1aea |
+| 主文件 | `Moodiary 设计稿.dc.html` |
+
+## 同步步骤
+
+1. **授权**（首次或过期时）：在 Claude Code 里执行 `/design-login`。
+2. **拉取**：用 `DesignSync` 的 `get_file` 读 `Moodiary 设计稿.dc.html`，
+   覆盖写进本目录同名文件。
+3. **看差异**：`git diff design/` —— 只有真正改动的那几行会亮起来。
+4. **改代码**：按下面的映射表定位。
+5. **验证**：`./gradlew assembleDebug` + 真机装一遍，别只看编译过没过。
+6. **提交**：设计快照和 Kotlin 改动放在同一个 commit 里，
+   这样以后能回答「这次 UI 变更对应设计稿的哪一版」。
+
+## 映射表
+
+| 设计稿里改了什么 | 改这里 |
+|---|---|
+| 色值（`#RRGGBB` / `rgba(...)`） | `app/src/main/java/com/moodiary/app/ui/theme/Color.kt` |
+| 字号 / 字重 / 行高 | `ui/theme/Type.kt` |
+| 圆角、卡片、胶囊、虚线框 | `ui/components/Common.kt` |
+| 底部栏、悬浮按钮 | `ui/components/BottomBar.kt` |
+| 时间线卡片结构 | `ui/components/EntryCard.kt` |
+| 照片排布规则 | `ui/components/Photo.kt` |
+| 新图标（新的 `<svg>` path） | 新建 `res/drawable/ic_*.xml` |
+| 界面文案 | `res/values/strings.xml` |
+| 01 时间线 | `ui/screens/TimelineScreen.kt` |
+| 02 发布 | `ui/screens/EditorScreen.kt` |
+| 03 日历 | `ui/screens/CalendarScreen.kt` |
+| 04 搜索 | `ui/screens/SearchScreen.kt` |
+| 05 洞察 | `ui/screens/InsightsScreen.kt` |
+| 06 我的 | `ui/screens/ProfileScreen.kt` |
+| 示例日记内容 | `data/SeedData.kt` |
+
+## 几件需要知道的事
+
+**没有变更通知。** `get_project` 对这个画布项目只返回 name/type/canEdit，
+不给 `updatedAt`；`list_projects` 只列设计系统类型的项目，画布不在其中。
+所以没法自动探测「设计稿改没改」——要么你说一声，要么定期拉一次比对。
+
+**设计侧关联的是另一个仓库。** `github.md` 里写的是
+`ulichirock-cmyk/moodiary`（develop 分支），不是本仓库
+`moo-diary-android`。如果哪天在 Claude Design 那边用「同步到仓库」，
+它会去找错的 repo。
+
+**`support.js` 没有快照。** 那是画布在浏览器里渲染 `.dc.html` 的运行时框架，
+不含任何设计内容，跟 Android 实现无关。
+
+**`ios-frame.jsx` 会自己变。** 文件头注明它是 omelette starter 的拷贝，
+上游更新时会被整体覆盖。也就是说它的 diff 有可能跟设计改动无关——
+看到它变了先别急着改 Android 代码，那是设备边框，本来就没移植
+（我们走的是 edge-to-edge + 真实系统 inset）。
+
+**快照怎么来的。** MCP 的读接口把文件内容返回到对话里，没有直写磁盘的通道，
+所以这份快照是照着接口返回誊写的，并按下列口径核对过——
+16 个色值及出现次数、9 个 rgba 值、16 档字号、6 个 `x-import` 屏、
+5 个 picsum 图种子、`moods` / `augEntries` / `seq` 三组脚本数据、
+以及全部示例日记正文。设计 token 层面可信。
+万一第一次 diff 出现某行「变了但看不出是什么设计改动」，
+那多半是誊写误差，以新拉的为准修掉快照即可。

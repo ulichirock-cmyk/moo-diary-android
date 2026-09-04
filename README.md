@@ -47,6 +47,14 @@ sdk.dir=/path/to/android-sdk
 - **Shapes** — card radius 14, row radius 12, image radius 10, pills fully
   rounded (`ui/components/Common.kt`).
 
+## Design source snapshot
+
+`design/` holds a snapshot of the Claude Design canvas project this app was built
+from, plus `design/SYNC.md` — the project id, the sync steps, and a design-region →
+Kotlin-file mapping table. It does not participate in the build. When the design
+changes, overwrite the snapshot with the new pull and `git diff design/` shows
+exactly what moved.
+
 ## Data
 
 `InMemoryDiaryRepository` seeds 15 entries reproducing the sample diary in the
