@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Mirrors ui/theme/Color.kt; used for the window background + launcher icon. -->
+    <color name="moodiary_background">#F5F1EB</color>
+    <color name="moodiary_accent">#D97757</color>
+    <color name="moodiary_accent_soft">#F5E6DD</color>
+</resources>
