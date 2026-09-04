@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">moodiary</string>
+
+    <!-- Bottom navigation -->
+    <string name="tab_timeline">时间线</string>
+    <string name="tab_calendar">日历</string>
+    <string name="tab_insights">洞察</string>
+    <string name="tab_profile">我的</string>
+    <string name="action_new_entry">写日记</string>
+
+    <!-- Moods -->
+    <string name="mood_happy">开心</string>
+    <string name="mood_calm">平静</string>
+    <string name="mood_full">充实</string>
+    <string name="mood_tired">疲惫</string>
+    <string name="mood_anxious">焦虑</string>
+
+    <!-- Timeline -->
+    <string name="streak_days">连续 %1$d 天</string>
+    <string name="timeline_empty">还没有日记,点下面的 + 写第一篇。</string>
+    <string name="action_search">搜索</string>
+
+    <!-- Editor -->
+    <string name="editor_cancel">取消</string>
+    <string name="editor_publish">发布</string>
+    <string name="editor_placeholder">今天发生了什么?</string>
+    <string name="editor_add_photo">添加照片</string>
+    <string name="editor_section_mood">今天的心情</string>
+    <string name="editor_section_tags">标签</string>
+    <string name="editor_new_tag">+ 新标签</string>
+    <string name="editor_new_tag_hint">标签名</string>
+    <string name="editor_draft_saved">草稿已自动保存 · 仅保存在本机</string>
+    <string name="editor_confirm">确定</string>
+
+    <!-- Calendar -->
+    <string name="calendar_title">日历</string>
+    <string name="calendar_year_month">%1$d 年 %2$d 月</string>
+    <string name="calendar_month_count">本月已记 %1$d 天</string>
+    <string name="calendar_entry_count">%1$d 条记录</string>
+    <string name="calendar_no_entry">这一天还没有记录</string>
+    <string name="calendar_legend">心情图例</string>
+    <string name="calendar_prev_month">上个月</string>
+    <string name="calendar_next_month">下个月</string>
+
+    <!-- Search -->
+    <string name="search_hint">搜索日记正文与标签</string>
+    <string name="search_result_count">%1$d 条日记提到「%2$s」</string>
+    <string name="search_no_result">没有找到包含「%1$s」的日记</string>
+    <string name="search_common_tags">常用标签</string>
+
+    <!-- Insights -->
+    <string name="insights_title">洞察</string>
+    <string name="insights_weekly_review">每周回顾</string>
+    <string name="insights_weekly_footnote">基于 %1$d 篇日记 · 每周一 8:00 自动生成</string>
+    <string name="insights_mood_title">近 14 天情绪</string>
+    <string name="insights_mood_subtitle">按当日主导心情着色</string>
+    <string name="insights_today">今天</string>
+    <string name="insights_themes_note">「加班」多出现在周一与周四,常与「疲惫」同日;「咖啡」之后的日记平均更长。</string>
+
+    <!-- Profile -->
+    <string name="profile_entries">篇日记</string>
+    <string name="profile_streak">连续天数</string>
+    <string name="profile_photos">张照片</string>
+    <string name="profile_section_data">数据</string>
+    <string name="profile_export">导出 Markdown</string>
+    <string name="profile_reminder">每日提醒</string>
+    <string name="profile_reminder_value">22:00</string>
+    <string name="profile_lock">应用锁</string>
+    <string name="profile_lock_value">生物识别</string>
+
+    <!-- Content descriptions -->
+    <string name="cd_back">返回</string>
+    <string name="cd_claude">Claude</string>
+    <string name="cd_photo">照片</string>
+    <string name="cd_location">位置</string>
+</resources>

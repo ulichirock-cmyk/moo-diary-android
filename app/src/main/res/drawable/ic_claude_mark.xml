@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  From assets/claude-mark.svg (viewBox 0 0 64 64). The source also carries three
+  letterform paths; at the 16dp this is drawn at they collapse into noise, so only
+  the star — the readable half of the mark — is kept.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="64" android:viewportHeight="64">
+    <path
+        android:fillColor="#FFD97757"
+        android:pathData="M32,10 L36,30 L56,32 L36,34 L32,54 L28,34 L8,32 L28,30 Z" />
+</vector>
