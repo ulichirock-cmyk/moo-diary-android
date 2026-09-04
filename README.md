@@ -47,6 +47,12 @@ sdk.dir=/path/to/android-sdk
 - **Shapes** — card radius 14, row radius 12, image radius 10, pills fully
   rounded (`ui/components/Common.kt`).
 
+## Working on this repo
+
+Read `CLAUDE.md` first. The short version: **the UI is an implementation of a
+design, not a free hand.** Check `design/` before changing anything visual, and
+follow `design/SYNC.md` when the design updates.
+
 ## Design source snapshot
 
 `design/` holds a snapshot of the Claude Design canvas project this app was built
