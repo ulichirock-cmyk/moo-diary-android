@@ -82,6 +82,7 @@ fun UpdateScreen(
         ) {
             Box(
                 Modifier
+                    .padding(bottom = 8.dp)
                     .size(64.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .background(MoodiaryColors.AccentSoft),
@@ -94,7 +95,6 @@ fun UpdateScreen(
                     modifier = Modifier.size(26.dp),
                 )
             }
-            Spacer(Modifier.height(0.dp))
             Text(
                 text = update?.let { stringResource(R.string.update_found, it.version) }
                     ?: stringResource(R.string.update_up_to_date),
@@ -113,7 +113,12 @@ fun UpdateScreen(
 
         if (update != null) {
             MoodiaryCard(
-                modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 34.dp),
+                // Full width, like the 立即更新 block below it: the design gives both the
+                // same 20px inset, and without fillMaxWidth the card shrinks to its
+                // longest release note.
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 20.dp, end = 20.dp, top = 34.dp),
                 padding = PaddingValues(20.dp),
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
