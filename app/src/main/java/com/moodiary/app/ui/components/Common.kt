@@ -25,7 +25,6 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.moodiary.app.data.Mood
 import com.moodiary.app.ui.theme.MoodiaryColors
 import com.moodiary.app.ui.theme.MoodiaryType
 
@@ -78,17 +77,6 @@ fun Eyebrow(text: String, modifier: Modifier = Modifier) {
         style = MoodiaryType.Eyebrow,
         color = MoodiaryColors.TextMuted,
         modifier = modifier,
-    )
-}
-
-/** The small mood swatch used in cards, the calendar legend and list rows. */
-@Composable
-fun MoodDot(mood: Mood, modifier: Modifier = Modifier, size: Dp = 7.dp) {
-    Box(
-        modifier
-            .size(size)
-            .clip(CircleShape)
-            .background(mood.color),
     )
 }
 

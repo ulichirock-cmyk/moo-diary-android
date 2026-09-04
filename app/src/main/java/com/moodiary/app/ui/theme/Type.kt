@@ -46,6 +46,18 @@ object MoodiaryType {
     /** 22sp serif semibold — big numerals (day-of-month, profile stats). */
     val Numeral = serif(22, FontWeight.SemiBold, 24.0)
 
+    /** 30sp serif medium — the date heading on 日记详情. */
+    val DetailDate = serif(30, FontWeight.Medium, 35.0)
+
+    /** 23sp serif medium — "有新版本 1.0.0". */
+    val UpdateTitle = serif(23, FontWeight.Medium, 28.0)
+
+    /** 19sp serif medium — the picked place name on 地图选点. */
+    val PlaceTitle = serif(19, FontWeight.Medium, 24.0)
+
+    /** 18sp serif semibold — the delete dialog's question. */
+    val DialogTitle = serif(18, FontWeight.SemiBold, 24.0)
+
     /** 17sp serif semibold — card headings inside 洞察. */
     val CardTitleSerif = serif(17, FontWeight.SemiBold, 24.0)
 
@@ -67,6 +79,13 @@ object MoodiaryType {
         lineHeight = 30.sp,
     )
 
+    /** 16.5sp serif, 1.95 line height — the diary body on 日记详情. */
+    val BodyDetail = TextStyle(
+        fontFamily = MoodiaryFonts.Serif,
+        fontSize = 16.5.sp,
+        lineHeight = 32.sp,
+    )
+
     /** 14.5sp serif, 1.85 line height — Claude's weekly review paragraph. */
     val BodyReview = TextStyle(
         fontFamily = MoodiaryFonts.Serif,
@@ -74,7 +93,12 @@ object MoodiaryType {
         lineHeight = 27.sp,
     )
 
+    val SheetRow = ui(15.0)
+    val SheetRowStrong = ui(15.0, FontWeight.SemiBold)
     val TitleSmall = ui(14.0, FontWeight.SemiBold)
+    val ListItem = ui(14.5)
+    val ListItemSmall = ui(13.5)
+    val Detail = ui(11.5)
     val Label = ui(14.0)
     val LabelMedium = ui(13.0)
     val LabelStrong = ui(13.0, FontWeight.SemiBold)

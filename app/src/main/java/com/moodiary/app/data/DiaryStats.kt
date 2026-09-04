@@ -17,18 +17,15 @@ fun List<DiaryEntry>.streak(today: LocalDate = LocalDate.now()): Int {
     return count
 }
 
-/** The mood that appears most on [date]; ties break toward the latest entry. */
-fun List<DiaryEntry>.dominantMood(date: LocalDate): Mood? =
-    filter { it.date == date }
-        .mapNotNull { it.mood }
-        .groupingBy { it }
-        .eachCount()
-        .maxByOrNull { it.value }
-        ?.key
-
 /** Tag -> use count, most used first. */
-fun List<DiaryEntry>.tagCounts(): List<Pair<String, Int>> =
-    flatMap { it.tags }
+fun List<DiaryEntry>.tagCounts(): List<Pair<String, Int>> = countBy { it.tags }
+
+/** Place -> use count, most used first. Drives the 常去 chips on the place picker. */
+fun List<DiaryEntry>.placeCounts(): List<Pair<String, Int>> =
+    countBy { entry -> entry.place?.let(::listOf).orEmpty() }
+
+private fun List<DiaryEntry>.countBy(selector: (DiaryEntry) -> List<String>): List<Pair<String, Int>> =
+    flatMap(selector)
         .groupingBy { it }
         .eachCount()
         .entries
@@ -48,6 +45,22 @@ fun List<DiaryEntry>.search(query: String): List<DiaryEntry> {
     if (q.isEmpty()) return emptyList()
     return filter { entry ->
         entry.text.contains(q, ignoreCase = true) ||
-            entry.tags.any { it.contains(q, ignoreCase = true) }
+            entry.tags.any { it.contains(q, ignoreCase = true) } ||
+            entry.place?.contains(q, ignoreCase = true) == true
     }
+}
+
+/**
+ * The entry written just before [entry], i.e. the one the detail screen's "‹ 9月1日"
+ * link goes to. The list is newest-first, so that is the *next* element.
+ */
+fun List<DiaryEntry>.olderThan(entry: DiaryEntry): DiaryEntry? {
+    val index = indexOfFirst { it.id == entry.id }
+    return if (index < 0) null else getOrNull(index + 1)
+}
+
+/** The entry written just after [entry]; null when [entry] is the newest. */
+fun List<DiaryEntry>.newerThan(entry: DiaryEntry): DiaryEntry? {
+    val index = indexOfFirst { it.id == entry.id }
+    return if (index <= 0) null else getOrNull(index - 1)
 }

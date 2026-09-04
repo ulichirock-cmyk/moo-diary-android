@@ -1,18 +1,18 @@
 package com.moodiary.app.ui.nav
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -20,56 +20,90 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.activity.compose.BackHandler
 import com.moodiary.app.data.DiaryViewModel
+import com.moodiary.app.data.newerThan
+import com.moodiary.app.data.olderThan
 import com.moodiary.app.data.toMarkdown
 import com.moodiary.app.ui.components.MoodiaryBottomBar
 import com.moodiary.app.ui.components.Tab
 import com.moodiary.app.ui.screens.CalendarScreen
+import com.moodiary.app.ui.screens.DetailScreen
 import com.moodiary.app.ui.screens.EditorScreen
 import com.moodiary.app.ui.screens.InsightsScreen
+import com.moodiary.app.ui.screens.MapPickerScreen
+import com.moodiary.app.ui.screens.PlacePickerScreen
 import com.moodiary.app.ui.screens.ProfileScreen
 import com.moodiary.app.ui.screens.SearchScreen
 import com.moodiary.app.ui.screens.TimelineScreen
+import com.moodiary.app.ui.screens.UpdateScreen
 import com.moodiary.app.ui.theme.MoodiaryColors
+import com.moodiary.app.util.appVersionName
 import com.moodiary.app.util.shareMarkdown
 
 /**
- * The whole app. Four tabs live behind the translucent bottom bar; the editor and
- * search are full-screen overlays that cover it, which is how the design draws them
- * (neither screen 02 nor 04 has a bottom bar).
+ * Screens that cover the tabs completely. They form a back stack because the editor
+ * can open the place picker, which can open the map picker — three deep. The tab
+ * screens themselves stay where they are underneath.
+ */
+private sealed interface Overlay {
+    data object Editor : Overlay
+    data object Search : Overlay
+    data object PlacePicker : Overlay
+    data object MapPicker : Overlay
+    data object Update : Overlay
+    data class Detail(val entryId: String) : Overlay
+}
+
+/**
+ * The whole app. Four tabs behind the bottom bar, plus the overlay stack above.
+ * A NavHost would buy nothing here: there are no deep links and no arguments beyond
+ * one entry id.
  */
 @Composable
 fun MoodiaryApp(vm: DiaryViewModel = viewModel()) {
     val context = LocalContext.current
     val entries by vm.entries.collectAsState()
+    val version = remember { context.appVersionName() }
+
     var tab by remember { mutableStateOf(Tab.TIMELINE) }
-    var overlay by remember { mutableStateOf<Overlay?>(null) }
+    val stack = remember { mutableStateListOf<Overlay>() }
+    var sheetOpen by remember { mutableStateOf(false) }
+    var confirmingDelete by remember { mutableStateOf(false) }
 
-    val statusBarPadding = WindowInsets.statusBars.asPaddingValues()
+    LaunchedEffect(Unit) { vm.checkForUpdate(version) }
 
-    Box(
-        Modifier
-            .fillMaxSize()
-            .background(MoodiaryColors.Background),
-    ) {
-        Box(Modifier.fillMaxSize().padding(top = statusBarPadding.calculateTopPadding())) {
+    fun push(overlay: Overlay) = stack.add(overlay)
+    fun pop() = stack.removeLastOrNull()
+    fun closeAll() = stack.clear()
+
+    Box(Modifier.fillMaxSize().background(MoodiaryColors.Background)) {
+        Box(Modifier.fillMaxSize()) {
             when (tab) {
                 Tab.TIMELINE -> TimelineScreen(
+                    modifier = Modifier.statusBarsPadding(),
                     entries = entries,
-                    onSearch = { overlay = Overlay.SEARCH },
+                    onSearch = { push(Overlay.Search) },
+                    onOpenEntry = { push(Overlay.Detail(it.id)) },
                 )
                 Tab.CALENDAR -> CalendarScreen(
+                    modifier = Modifier.statusBarsPadding(),
                     entries = entries,
                     month = vm.visibleMonth,
                     selected = vm.selectedDate,
                     onMonthChange = vm::showMonth,
                     onSelectDate = vm::selectDate,
+                    onOpenEntry = { push(Overlay.Detail(it.id)) },
                 )
-                Tab.INSIGHTS -> InsightsScreen(entries = entries)
-                Tab.PROFILE -> ProfileScreen(
+                Tab.INSIGHTS -> InsightsScreen(
                     entries = entries,
+                    modifier = Modifier.statusBarsPadding(),
+                )
+                Tab.PROFILE -> ProfileScreen(
+                    modifier = Modifier.statusBarsPadding(),
+                    entries = entries,
+                    updateVersion = vm.availableUpdate?.version,
                     onExport = { context.shareMarkdown(entries.toMarkdown()) },
+                    onCheckUpdate = { push(Overlay.Update) },
                 )
             }
         }
@@ -77,52 +111,156 @@ fun MoodiaryApp(vm: DiaryViewModel = viewModel()) {
         MoodiaryBottomBar(
             current = tab,
             onSelect = { tab = it },
-            onCompose = { overlay = Overlay.EDITOR },
+            onCompose = {
+                vm.startNewEntry()
+                push(Overlay.Editor)
+            },
             modifier = Modifier.align(Alignment.BottomCenter),
         )
 
+        val top = stack.lastOrNull()
         AnimatedVisibility(
-            visible = overlay != null,
+            visible = top != null,
             enter = slideInVertically { it },
             exit = slideOutVertically { it },
         ) {
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .background(MoodiaryColors.Background)
-                    .padding(top = statusBarPadding.calculateTopPadding()),
-            ) {
-                when (overlay) {
-                    Overlay.EDITOR -> EditorScreen(
+            Box(Modifier.fillMaxSize().background(MoodiaryColors.Background)) {
+                when (top) {
+                    Overlay.Editor -> EditorScreen(
+                        modifier = Modifier.statusBarsPadding(),
                         vm = vm,
-                        onDismiss = { overlay = null },
+                        onDismiss = {
+                            vm.clearDraft()
+                            pop()
+                        },
                         onPublished = {
-                            overlay = null
+                            closeAll()
                             tab = Tab.TIMELINE
                         },
+                        onPickPlace = {
+                            vm.openPlacePicker()
+                            push(Overlay.PlacePicker)
+                        },
                     )
-                    Overlay.SEARCH -> SearchScreen(
+
+                    Overlay.Search -> SearchScreen(
+                        modifier = Modifier.statusBarsPadding(),
                         entries = entries,
                         query = vm.searchQuery,
                         onQueryChange = vm::onSearchQueryChange,
                         onDismiss = {
                             vm.clearSearch()
-                            overlay = null
+                            pop()
+                        },
+                        onOpenEntry = { push(Overlay.Detail(it.id)) },
+                    )
+
+                    Overlay.PlacePicker -> PlacePickerScreen(
+                        modifier = Modifier.statusBarsPadding(),
+                        nearby = vm.nearbyPlaces,
+                        frequent = vm.frequentPlaces(),
+                        selected = vm.pendingPlace,
+                        query = vm.placeQuery,
+                        onQueryChange = vm::onPlaceQueryChange,
+                        onSelect = vm::selectPlace,
+                        onOpenMap = {
+                            vm.openMapPicker()
+                            push(Overlay.MapPicker)
+                        },
+                        onCancel = { pop() },
+                        onDone = {
+                            vm.commitPlace()
+                            pop()
                         },
                     )
+
+                    Overlay.MapPicker -> MapPickerScreen(
+                        modifier = Modifier.statusBarsPadding(),
+                        candidates = vm.pinPlaces,
+                        selected = vm.pendingPlace,
+                        onBack = { pop() },
+                        onSelect = vm::selectPlace,
+                        onConfirm = {
+                            vm.commitPlace()
+                            // Straight back to the editor: the map screen answers the
+                            // same question the picker does.
+                            pop()
+                            pop()
+                        },
+                    )
+
+                    Overlay.Update -> UpdateScreen(
+                        modifier = Modifier.statusBarsPadding(),
+                        currentVersion = version,
+                        update = vm.availableUpdate,
+                        onBack = { pop() },
+                        onUpdate = { pop() },
+                    )
+
+                    is Overlay.Detail -> {
+                        val entry = entries.firstOrNull { it.id == top.entryId }
+                        if (entry == null) {
+                            // The entry was deleted from under us.
+                            LaunchedEffect(top.entryId) { pop() }
+                        } else {
+                            DetailScreen(
+                                entry = entry,
+                                older = entries.olderThan(entry),
+                                newer = entries.newerThan(entry),
+                                sheetOpen = sheetOpen,
+                                confirmingDelete = confirmingDelete,
+                                onBack = { pop() },
+                                onOpenSheet = { sheetOpen = true },
+                                onDismissSheet = { sheetOpen = false },
+                                onEdit = {
+                                    sheetOpen = false
+                                    vm.startEditing(entry)
+                                    push(Overlay.Editor)
+                                },
+                                onExport = {
+                                    sheetOpen = false
+                                    context.shareMarkdown(
+                                        markdown = entry.toMarkdown(),
+                                        fileName = "moodiary-${entry.date}.md",
+                                    )
+                                },
+                                onAskDelete = {
+                                    sheetOpen = false
+                                    confirmingDelete = true
+                                },
+                                onDismissDelete = { confirmingDelete = false },
+                                onConfirmDelete = {
+                                    confirmingDelete = false
+                                    vm.deleteEntry(entry.id)
+                                    pop()
+                                },
+                                onNavigate = { neighbour ->
+                                    pop()
+                                    push(Overlay.Detail(neighbour.id))
+                                },
+                            )
+                        }
+                    }
+
                     null -> Unit
                 }
             }
         }
     }
 
-    BackHandler(enabled = overlay != null) {
-        if (overlay == Overlay.SEARCH) vm.clearSearch()
-        overlay = null
+    BackHandler(enabled = stack.isNotEmpty()) {
+        when {
+            confirmingDelete -> confirmingDelete = false
+            sheetOpen -> sheetOpen = false
+            else -> {
+                if (stack.lastOrNull() == Overlay.Search) vm.clearSearch()
+                if (stack.lastOrNull() == Overlay.Editor) vm.clearDraft()
+                pop()
+            }
+        }
     }
-    BackHandler(enabled = overlay == null && tab != Tab.TIMELINE) {
+    BackHandler(enabled = stack.isEmpty() && tab != Tab.TIMELINE) {
         tab = Tab.TIMELINE
     }
 }
 
-private enum class Overlay { EDITOR, SEARCH }

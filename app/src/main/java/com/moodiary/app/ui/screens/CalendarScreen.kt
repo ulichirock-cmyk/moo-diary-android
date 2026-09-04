@@ -5,8 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -35,12 +33,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.moodiary.app.R
 import com.moodiary.app.data.DiaryEntry
-import com.moodiary.app.data.Mood
 import com.moodiary.app.data.datesWithEntries
-import com.moodiary.app.data.dominantMood
 import com.moodiary.app.ui.Fmt
-import com.moodiary.app.ui.components.Eyebrow
-import com.moodiary.app.ui.components.MoodDot
 import com.moodiary.app.ui.components.MoodiaryCard
 import com.moodiary.app.ui.components.RowShape
 import com.moodiary.app.ui.components.bottomBarContentPadding
@@ -49,7 +43,7 @@ import com.moodiary.app.ui.theme.MoodiaryType
 import java.time.LocalDate
 import java.time.YearMonth
 
-/** 03 日历回顾 — a month grid where days that have entries carry a mood dot. */
+/** 03 日历回顾 — a month grid where days that have an entry carry an accent dot. */
 @Composable
 fun CalendarScreen(
     entries: List<DiaryEntry>,
@@ -57,6 +51,7 @@ fun CalendarScreen(
     selected: LocalDate,
     onMonthChange: (YearMonth) -> Unit,
     onSelectDate: (LocalDate) -> Unit,
+    onOpenEntry: (DiaryEntry) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val today = LocalDate.now()
@@ -81,7 +76,6 @@ fun CalendarScreen(
                 month = month,
                 today = today,
                 selected = selected,
-                entries = entries,
                 entryDates = entryDates,
                 onSelectDate = onSelectDate,
             )
@@ -109,10 +103,11 @@ fun CalendarScreen(
             modifier = Modifier.padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            dayEntries.forEach { DayEntryRow(it) }
-            Spacer(Modifier.height(6.dp))
-            MoodLegend()
+            dayEntries.forEach { entry ->
+                DayEntryRow(entry) { onOpenEntry(entry) }
+            }
         }
+        Spacer(Modifier.height(24.dp))
     }
 }
 
@@ -185,7 +180,6 @@ private fun MonthGrid(
     month: YearMonth,
     today: LocalDate,
     selected: LocalDate,
-    entries: List<DiaryEntry>,
     entryDates: Set<LocalDate>,
     onSelectDate: (LocalDate) -> Unit,
 ) {
@@ -204,7 +198,6 @@ private fun MonthGrid(
                         inMonth = YearMonth.from(date) == month,
                         isToday = date == today,
                         isSelected = date == selected,
-                        mood = if (date in entryDates) entries.dominantMood(date) else null,
                         hasEntry = date in entryDates,
                         onClick = { onSelectDate(date) },
                         modifier = Modifier.weight(1f),
@@ -221,7 +214,6 @@ private fun DayCell(
     inMonth: Boolean,
     isToday: Boolean,
     isSelected: Boolean,
-    mood: Mood?,
     hasEntry: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -235,11 +227,12 @@ private fun DayCell(
         isToday -> Color.White
         isSelected -> MoodiaryColors.AccentText
         inMonth -> MoodiaryColors.TextPrimary
-        else -> Color(0xFFC9C2B5)
+        else -> MoodiaryColors.Faint
     }
+    // The design replaced the per-mood dot with one accent dot meaning "has an entry".
     val dotColor = when {
         isToday && hasEntry -> Color.White.copy(alpha = 0.9f)
-        mood != null -> mood.color
+        hasEntry -> MoodiaryColors.Accent
         else -> Color.Transparent
     }
     Column(
@@ -264,25 +257,28 @@ private fun DayCell(
 }
 
 @Composable
-private fun DayEntryRow(entry: DiaryEntry) {
+private fun DayEntryRow(entry: DiaryEntry, onClick: () -> Unit) {
     MoodiaryCard(
         modifier = Modifier.fillMaxWidth(),
         padding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
         shape = RowShape,
+        onClick = onClick,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(3.dp),
             ) {
-                val moodLabel = entry.mood?.let { stringResource(it.labelRes) }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    entry.mood?.let {
-                        MoodDot(it, size = 6.dp)
-                        Spacer(Modifier.width(6.dp))
-                    }
+                    Box(
+                        Modifier
+                            .size(6.dp)
+                            .clip(CircleShape)
+                            .background(MoodiaryColors.Faint),
+                    )
+                    Spacer(Modifier.width(6.dp))
                     Text(
-                        Fmt.time(entry.createdAt) + (moodLabel?.let { " · $it" } ?: ""),
+                        Fmt.time(entry.createdAt),
                         style = MoodiaryType.Caption,
                         color = MoodiaryColors.TextMuted,
                     )
@@ -302,29 +298,6 @@ private fun DayEntryRow(entry: DiaryEntry) {
                 tint = MoodiaryColors.TextMuted,
                 modifier = Modifier.size(14.dp),
             )
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun MoodLegend() {
-    FlowRow(
-        modifier = Modifier.padding(horizontal = 4.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        Eyebrow(stringResource(R.string.calendar_legend), Modifier.padding(top = 2.dp))
-        Mood.entries.forEach { mood ->
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                MoodDot(mood, size = 6.dp)
-                Spacer(Modifier.width(5.dp))
-                Text(
-                    stringResource(mood.labelRes),
-                    style = MoodiaryType.Caption,
-                    color = MoodiaryColors.TextTertiary,
-                )
-            }
         }
     }
 }

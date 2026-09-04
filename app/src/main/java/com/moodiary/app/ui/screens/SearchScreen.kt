@@ -63,6 +63,7 @@ fun SearchScreen(
     query: String,
     onQueryChange: (String) -> Unit,
     onDismiss: () -> Unit,
+    onOpenEntry: (DiaryEntry) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val results = remember(entries, query) { entries.search(query) }
@@ -85,7 +86,7 @@ fun SearchScreen(
             )
             Spacer(Modifier.width(10.dp))
             Text(
-                stringResource(R.string.editor_cancel),
+                stringResource(R.string.action_cancel),
                 style = MoodiaryType.Label,
                 color = MoodiaryColors.TextTertiary,
                 modifier = Modifier.clip(PillShape).clickable(onClick = onDismiss).padding(6.dp),
@@ -107,7 +108,9 @@ fun SearchScreen(
                 modifier = Modifier.padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                results.forEach { SearchResultRow(it, query) }
+                results.forEach { entry ->
+                    SearchResultRow(entry, query) { onOpenEntry(entry) }
+                }
             }
         }
 
@@ -178,12 +181,12 @@ private fun SearchField(query: String, onQueryChange: (String) -> Unit, modifier
 }
 
 @Composable
-private fun SearchResultRow(entry: DiaryEntry, query: String) {
-    val moodLabel = entry.mood?.let { stringResource(it.labelRes) }
+private fun SearchResultRow(entry: DiaryEntry, query: String, onClick: () -> Unit) {
     MoodiaryCard(
         modifier = Modifier.fillMaxWidth(),
         padding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
         shape = RowShape,
+        onClick = onClick,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             entry.photos.firstOrNull()?.let {
@@ -192,7 +195,7 @@ private fun SearchResultRow(entry: DiaryEntry, query: String) {
             }
             Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text(
-                    Fmt.monthDay(entry.date) + (moodLabel?.let { " · $it" } ?: ""),
+                    Fmt.monthDay(entry.date) + (entry.place?.let { " · $it" } ?: ""),
                     style = MoodiaryType.Caption,
                     color = MoodiaryColors.TextMuted,
                 )

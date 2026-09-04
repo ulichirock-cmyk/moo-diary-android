@@ -51,8 +51,17 @@ object MoodiaryColors {
     /** Search-hit highlight — `#F5E08C`. */
     val Highlight = Color(0xFFF5E08C)
 
-    /** Translucent bottom bar — `rgba(245,241,235,0.94)`. */
-    val BarBackground = Color(0xFFF5F1EB).copy(alpha = 0.94f)
+    /** Bottom bar. The design turned this opaque; it used to be 94% translucent. */
+    val BarBackground = Color(0xFFF5F1EB)
+
+    /** Destructive text and buttons — 删除这篇日记 / 删除. `#B54A3C`. */
+    val Destructive = Color(0xFFB54A3C)
+
+    /** Scrim behind the action sheet and the delete dialog — `rgba(31,30,29,0.4)`. */
+    val Scrim = Color(0xFF1F1E1D).copy(alpha = 0.4f)
+
+    /** Disabled / future day numerals and inactive hints — `#C9C2B5`. */
+    val Faint = Color(0xFFC9C2B5)
 
     /** Placeholder behind images while they load — `#EDE7DC`. */
     val ImagePlaceholder = Color(0xFFEDE7DC)

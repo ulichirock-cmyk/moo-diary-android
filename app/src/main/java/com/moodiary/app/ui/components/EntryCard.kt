@@ -19,16 +19,24 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.moodiary.app.R
 import com.moodiary.app.data.DiaryEntry
-import com.moodiary.app.data.Mood
 import com.moodiary.app.ui.Fmt
 import com.moodiary.app.ui.theme.MoodiaryColors
 import com.moodiary.app.ui.theme.MoodiaryType
 
-/** One card in the timeline: date rail, mood pill, photos, prose, tags, place. */
+/**
+ * One card in the timeline: date rail, photos, prose, tags, place.
+ *
+ * The design removed the mood pill that used to sit on the right of the header, so
+ * the header row now ends after the weekday/time column.
+ */
 @Composable
-fun EntryCard(entry: DiaryEntry, modifier: Modifier = Modifier) {
-    MoodiaryCard(modifier = modifier.fillMaxWidth()) {
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+fun EntryCard(entry: DiaryEntry, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    MoodiaryCard(
+        modifier = modifier.fillMaxWidth(),
+        padding = PaddingValues(20.dp),
+        onClick = onClick,
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             EntryCardHeader(entry)
 
             if (entry.photos.isNotEmpty()) {
@@ -84,26 +92,6 @@ private fun EntryCardHeader(entry: DiaryEntry) {
                 color = MoodiaryColors.TextMuted,
             )
         }
-        Spacer(Modifier.weight(1f))
-        entry.mood?.let { MoodPill(it) }
-    }
-}
-
-/** Outlined mood pill — dot plus label, as on the 疲惫 card in the design. */
-@Composable
-fun MoodPill(mood: Mood, modifier: Modifier = Modifier) {
-    Pill(
-        modifier = modifier,
-        border = MoodiaryColors.BorderStrong,
-        padding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-    ) {
-        MoodDot(mood)
-        Spacer(Modifier.width(6.dp))
-        Text(
-            stringResource(mood.labelRes),
-            style = MoodiaryType.Caption,
-            color = MoodiaryColors.TextSecondary,
-        )
     }
 }
 

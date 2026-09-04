@@ -9,29 +9,25 @@
     <string name="tab_profile">我的</string>
     <string name="action_new_entry">写日记</string>
 
-    <!-- Moods -->
-    <string name="mood_happy">开心</string>
-    <string name="mood_calm">平静</string>
-    <string name="mood_full">充实</string>
-    <string name="mood_tired">疲惫</string>
-    <string name="mood_anxious">焦虑</string>
-
-    <!-- Timeline -->
-    <string name="streak_days">连续 %1$d 天</string>
-    <string name="timeline_empty">还没有日记,点下面的 + 写第一篇。</string>
+    <!-- Common -->
+    <string name="action_cancel">取消</string>
+    <string name="action_confirm">确定</string>
+    <string name="action_done">完成</string>
     <string name="action_search">搜索</string>
 
+    <!-- Timeline -->
+    <string name="timeline_empty">还没有日记,点下面的 + 写第一篇。</string>
+
     <!-- Editor -->
-    <string name="editor_cancel">取消</string>
     <string name="editor_publish">发布</string>
+    <string name="editor_save">保存</string>
     <string name="editor_placeholder">今天发生了什么?</string>
     <string name="editor_add_photo">添加照片</string>
-    <string name="editor_section_mood">今天的心情</string>
+    <string name="editor_section_place">地点</string>
     <string name="editor_section_tags">标签</string>
+    <string name="editor_place_empty">添加地点</string>
     <string name="editor_new_tag">+ 新标签</string>
     <string name="editor_new_tag_hint">标签名</string>
-    <string name="editor_draft_saved">草稿已自动保存 · 仅保存在本机</string>
-    <string name="editor_confirm">确定</string>
 
     <!-- Calendar -->
     <string name="calendar_title">日历</string>
@@ -39,7 +35,6 @@
     <string name="calendar_month_count">本月已记 %1$d 天</string>
     <string name="calendar_entry_count">%1$d 条记录</string>
     <string name="calendar_no_entry">这一天还没有记录</string>
-    <string name="calendar_legend">心情图例</string>
     <string name="calendar_prev_month">上个月</string>
     <string name="calendar_next_month">下个月</string>
 
@@ -52,11 +47,8 @@
     <!-- Insights -->
     <string name="insights_title">洞察</string>
     <string name="insights_weekly_review">每周回顾</string>
+    <string name="insights_weekly_body">这一周你写下 %1$d 篇日记、%2$d 张照片,平均每篇 %3$d 字。周末的两篇写得最长,周一的加班日最短。「阅读」已连续三周出现在你的夜晚,或许值得给它一个固定的时段。</string>
     <string name="insights_weekly_footnote">基于 %1$d 篇日记 · 每周一 8:00 自动生成</string>
-    <string name="insights_mood_title">近 14 天情绪</string>
-    <string name="insights_mood_subtitle">按当日主导心情着色</string>
-    <string name="insights_today">今天</string>
-    <string name="insights_themes_note">「加班」多出现在周一与周四,常与「疲惫」同日;「咖啡」之后的日记平均更长。</string>
 
     <!-- Profile -->
     <string name="profile_entries">篇日记</string>
@@ -68,6 +60,52 @@
     <string name="profile_reminder_value">22:00</string>
     <string name="profile_lock">应用锁</string>
     <string name="profile_lock_value">生物识别</string>
+    <string name="profile_check_update">检查更新</string>
+    <string name="profile_update_available">%1$s 可用</string>
+    <string name="profile_update_none">已是最新</string>
+
+    <!-- 07 日记详情 -->
+    <string name="detail_meta">%1$s %2$s</string>
+    <string name="detail_meta_place">%1$s %2$s · %3$s</string>
+    <string name="detail_no_newer">没有更新的了</string>
+    <string name="detail_more">更多操作</string>
+
+    <!-- 08 更多操作 -->
+    <string name="more_edit">编辑这篇日记</string>
+    <string name="more_export">导出为 Markdown</string>
+    <string name="more_delete">删除这篇日记</string>
+
+    <!-- 09 删除确认 -->
+    <string name="delete_title">删除 %1$d 月 %2$d 日这篇?</string>
+    <string name="delete_body_photos">文字与 %1$d 张照片将从本机移除,无法恢复。</string>
+    <string name="delete_body_text_only">文字将从本机移除,无法恢复。</string>
+    <string name="delete_confirm">删除</string>
+
+    <!-- 10 地点选择 -->
+    <string name="place_title">选择地点</string>
+    <string name="place_search_hint">搜索地点，或输入自定义名称</string>
+    <string name="place_nearby">附近</string>
+    <string name="place_frequent">常去</string>
+    <string name="place_pick_on_map">在地图上选点</string>
+    <string name="place_none">不记录地点</string>
+    <string name="place_use_custom">使用「%1$s」</string>
+
+    <!-- 11 地图选点 -->
+    <string name="map_title">地图选点</string>
+    <string name="map_placeholder">系统地图接管渲染</string>
+    <string name="map_hint">拖动地图可微调位置</string>
+    <string name="map_recenter">回到当前位置</string>
+    <string name="map_use_place">用这个地点</string>
+
+    <!-- 12 版本更新 -->
+    <string name="update_title">检查更新</string>
+    <string name="update_found">有新版本 %1$s</string>
+    <string name="update_current">当前 %1$s · %2$s</string>
+    <string name="update_up_to_date">已经是最新版本</string>
+    <string name="update_current_only">当前 %1$s</string>
+    <string name="update_notes">本次更新</string>
+    <string name="update_now">立即更新</string>
+    <string name="update_later">以后再说</string>
 
     <!-- Content descriptions -->
     <string name="cd_back">返回</string>

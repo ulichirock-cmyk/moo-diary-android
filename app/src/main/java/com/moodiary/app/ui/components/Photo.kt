@@ -42,12 +42,13 @@ fun EntryPhoto(model: String, modifier: Modifier = Modifier) {
 
 /**
  * The photo block of a timeline card:
- *  - one photo  -> full width, 190dp tall
- *  - two photos -> side by side, 130dp tall
- *  - more       -> a two-column grid of 130dp tiles
+ *  - one photo  -> full width, 170dp tall
+ *  - two photos -> side by side, 76dp tall
+ *  - more       -> a two-column grid of 76dp tiles
  *
- * Laid out with plain rows rather than a lazy grid because the card itself already
- * lives inside a `LazyColumn`.
+ * Both heights come straight from the design, which flattened the multi-photo strip
+ * considerably in this revision. Laid out with plain rows rather than a lazy grid
+ * because the card itself already lives inside a `LazyColumn`.
  */
 @Composable
 fun EntryPhotoBlock(photos: List<String>, modifier: Modifier = Modifier) {
@@ -55,13 +56,13 @@ fun EntryPhotoBlock(photos: List<String>, modifier: Modifier = Modifier) {
         photos.isEmpty() -> Unit
         photos.size == 1 -> EntryPhoto(
             model = photos[0],
-            modifier = modifier.fillMaxWidth().height(190.dp),
+            modifier = modifier.fillMaxWidth().height(170.dp),
         )
         else -> Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
             photos.chunked(2).forEach { row ->
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     row.forEach { photo ->
-                        EntryPhoto(photo, Modifier.weight(1f).height(130.dp))
+                        EntryPhoto(photo, Modifier.weight(1f).height(76.dp))
                     }
                     // Keep a lone trailing photo half-width instead of stretching it.
                     if (row.size == 1) androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))

@@ -3,6 +3,9 @@ package com.moodiary.app.ui.screens
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,10 +24,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.clickable
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
@@ -49,13 +52,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.moodiary.app.R
 import com.moodiary.app.data.DiaryViewModel
-import com.moodiary.app.data.Mood
 import com.moodiary.app.ui.Fmt
 import com.moodiary.app.ui.components.Eyebrow
 import com.moodiary.app.ui.components.ImageShape
-import com.moodiary.app.ui.components.MoodDot
-import com.moodiary.app.ui.components.PillShape
 import com.moodiary.app.ui.components.Pill
+import com.moodiary.app.ui.components.PillShape
 import com.moodiary.app.ui.components.SquarePhoto
 import com.moodiary.app.ui.components.dashedBorder
 import com.moodiary.app.ui.theme.MoodiaryColors
@@ -63,11 +64,11 @@ import com.moodiary.app.ui.theme.MoodiaryType
 import java.time.LocalDateTime
 
 /**
- * 02 发布 / 编辑 — write first, then photos, mood and tags.
+ * 02 发布 / 编辑 — write first, then photos, place and tags.
  *
- * Unlike the static design the editor opens empty; the draft lives in
- * [DiaryViewModel] so leaving and coming back really does restore it, which is what
- * the "草稿已自动保存" footer promises.
+ * The design replaced the mood picker with a place row, and removed the
+ * "草稿已自动保存" footer. The draft still lives in [DiaryViewModel], which is what
+ * lets the place picker cover this screen and hand a name back.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -75,9 +76,12 @@ fun EditorScreen(
     vm: DiaryViewModel,
     onDismiss: () -> Unit,
     onPublished: () -> Unit,
+    onPickPlace: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val now = remember { LocalDateTime.now() }
+    val stamp = vm.draftTimestamp(now)
+    val editing = vm.editingId != null
     var showTagDialog by remember { mutableStateOf(false) }
     val bodyFocus = remember { FocusRequester() }
 
@@ -94,8 +98,9 @@ fun EditorScreen(
             .verticalScroll(rememberScrollState()),
     ) {
         EditorTopBar(
-            dateLabel = Fmt.monthDay(now.toLocalDate()) + " " + Fmt.weekday(now.toLocalDate()),
-            timeLabel = Fmt.time(now),
+            dateLabel = Fmt.monthDay(stamp.toLocalDate()) + " " + Fmt.weekday(stamp.toLocalDate()),
+            timeLabel = Fmt.time(stamp),
+            actionLabel = stringResource(if (editing) R.string.editor_save else R.string.editor_publish),
             canPublish = vm.canPublish,
             onCancel = onDismiss,
             onPublish = {
@@ -105,11 +110,9 @@ fun EditorScreen(
         )
 
         Column(
-            modifier = Modifier.padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(26.dp),
         ) {
-            Spacer(Modifier.height(0.dp))
-
             BasicTextField(
                 value = vm.draftText,
                 onValueChange = vm::onDraftTextChange,
@@ -144,21 +147,16 @@ fun EditorScreen(
             )
 
             Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                Eyebrow(stringResource(R.string.editor_section_mood))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Mood.entries.forEach { mood ->
-                        MoodChoiceChip(
-                            mood = mood,
-                            selected = vm.draftMood == mood,
-                            onClick = { vm.onDraftMoodClick(mood) },
-                        )
-                    }
-                }
+                Eyebrow(stringResource(R.string.editor_section_place))
+                PlaceRow(place = vm.draftPlace, onClick = onPickPlace)
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
                 Eyebrow(stringResource(R.string.editor_section_tags))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     vm.editorTagOptions().forEach { tag ->
                         TagChoiceChip(
                             tag = tag,
@@ -180,10 +178,7 @@ fun EditorScreen(
                 }
             }
         }
-
-        Spacer(Modifier.height(28.dp))
-        DraftFooter(visible = vm.draftIsDirty)
-        Spacer(Modifier.height(32.dp))
+        Spacer(Modifier.height(40.dp))
     }
 
     if (showTagDialog) {
@@ -202,6 +197,7 @@ fun EditorScreen(
 private fun EditorTopBar(
     dateLabel: String,
     timeLabel: String,
+    actionLabel: String,
     canPublish: Boolean,
     onCancel: () -> Unit,
     onPublish: () -> Unit,
@@ -213,7 +209,7 @@ private fun EditorTopBar(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            stringResource(R.string.editor_cancel),
+            stringResource(R.string.action_cancel),
             style = MoodiaryType.Label,
             color = MoodiaryColors.TextTertiary,
             modifier = Modifier.clip(PillShape).clickable(onClick = onCancel).padding(6.dp),
@@ -235,12 +231,44 @@ private fun EditorTopBar(
             padding = PaddingValues(horizontal = 16.dp, vertical = 7.dp),
             onClick = if (canPublish) onPublish else null,
         ) {
-            Text(
-                stringResource(R.string.editor_publish),
-                style = MoodiaryType.LabelStrong,
-                color = Color.White,
-            )
+            Text(actionLabel, style = MoodiaryType.LabelStrong, color = Color.White)
         }
+    }
+}
+
+/** The 地点 field: a filled row that opens the place picker. */
+@Composable
+private fun PlaceRow(place: String?, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(10.dp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(MoodiaryColors.Surface)
+            .border(1.dp, MoodiaryColors.Border, shape)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            painterResource(R.drawable.ic_pin),
+            contentDescription = null,
+            tint = MoodiaryColors.Accent,
+            modifier = Modifier.size(16.dp),
+        )
+        Spacer(Modifier.width(10.dp))
+        Text(
+            text = place ?: stringResource(R.string.editor_place_empty),
+            style = MoodiaryType.Label,
+            color = if (place != null) MoodiaryColors.TextPrimary else MoodiaryColors.TextMuted,
+            modifier = Modifier.weight(1f),
+        )
+        Icon(
+            painterResource(R.drawable.ic_chevron_right),
+            contentDescription = null,
+            tint = MoodiaryColors.Faint,
+            modifier = Modifier.size(16.dp),
+        )
     }
 }
 
@@ -259,10 +287,7 @@ private fun PhotoGrid(
                     if (cell == null) {
                         AddPhotoTile(Modifier.weight(1f), onAdd)
                     } else {
-                        SquarePhoto(
-                            cell,
-                            Modifier.weight(1f).clickable { onRemove(cell) },
-                        )
+                        SquarePhoto(cell, Modifier.weight(1f).clickable { onRemove(cell) })
                     }
                 }
                 repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
@@ -301,25 +326,6 @@ private fun AddPhotoTile(modifier: Modifier = Modifier, onClick: () -> Unit) {
 }
 
 @Composable
-private fun MoodChoiceChip(mood: Mood, selected: Boolean, onClick: () -> Unit) {
-    Pill(
-        background = if (selected) MoodiaryColors.AccentSoft else Color.Transparent,
-        border = if (selected) MoodiaryColors.Accent else MoodiaryColors.BorderStrong,
-        borderWidth = if (selected) 1.5.dp else 1.dp,
-        padding = PaddingValues(horizontal = 13.dp, vertical = 6.dp),
-        onClick = onClick,
-    ) {
-        MoodDot(mood)
-        Spacer(Modifier.width(6.dp))
-        Text(
-            stringResource(mood.labelRes),
-            style = if (selected) MoodiaryType.ChipStrong else MoodiaryType.Chip,
-            color = if (selected) MoodiaryColors.AccentText else MoodiaryColors.TextSecondary,
-        )
-    }
-}
-
-@Composable
 private fun TagChoiceChip(tag: String, selected: Boolean, onClick: () -> Unit) {
     Pill(
         background = if (selected) MoodiaryColors.AccentTint else Color.Transparent,
@@ -336,34 +342,12 @@ private fun TagChoiceChip(tag: String, selected: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-private fun DraftFooter(visible: Boolean) {
-    if (!visible) return
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_check),
-            contentDescription = null,
-            tint = MoodiaryColors.TextMuted,
-            modifier = Modifier.size(13.dp),
-        )
-        Spacer(Modifier.width(6.dp))
-        Text(
-            stringResource(R.string.editor_draft_saved),
-            style = MoodiaryType.Meta,
-            color = MoodiaryColors.TextMuted,
-        )
-    }
-}
-
-@Composable
 private fun NewTagDialog(onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
     var value by remember { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = MoodiaryColors.Surface,
-        shape = CircleShape.copy(all = androidx.compose.foundation.shape.CornerSize(14.dp)),
+        shape = RoundedCornerShape(CornerSize(14.dp)),
         title = { Text(stringResource(R.string.editor_new_tag), style = MoodiaryType.TitleSmall) },
         text = {
             OutlinedTextField(
@@ -375,12 +359,12 @@ private fun NewTagDialog(onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
         },
         confirmButton = {
             TextButton(onClick = { onConfirm(value) }) {
-                Text(stringResource(R.string.editor_confirm), color = MoodiaryColors.AccentText)
+                Text(stringResource(R.string.action_confirm), color = MoodiaryColors.AccentText)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.editor_cancel), color = MoodiaryColors.TextTertiary)
+                Text(stringResource(R.string.action_cancel), color = MoodiaryColors.TextTertiary)
             }
         },
     )

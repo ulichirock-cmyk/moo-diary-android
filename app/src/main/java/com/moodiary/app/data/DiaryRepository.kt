@@ -13,12 +13,16 @@ import java.time.LocalDateTime
 interface DiaryRepository {
     val entries: StateFlow<List<DiaryEntry>>
 
-    fun add(entry: DiaryEntry)
+    /** Inserts a new entry, or replaces the existing one with the same id. */
+    fun upsert(entry: DiaryEntry)
+
+    fun delete(id: String)
 }
 
 /**
  * Process-lifetime store seeded from [seedEntries]. Entries are kept newest-first so
- * the timeline can render the list directly.
+ * the timeline can render the list directly, and so prev/next on the detail screen is
+ * plain list adjacency.
  */
 class InMemoryDiaryRepository(
     seed: List<DiaryEntry> = seedEntries(),
@@ -27,8 +31,13 @@ class InMemoryDiaryRepository(
     private val _entries = MutableStateFlow(seed.sortedByDescending { it.createdAt })
     override val entries: StateFlow<List<DiaryEntry>> = _entries.asStateFlow()
 
-    override fun add(entry: DiaryEntry) {
-        _entries.value = (_entries.value + entry).sortedByDescending { it.createdAt }
+    override fun upsert(entry: DiaryEntry) {
+        val without = _entries.value.filterNot { it.id == entry.id }
+        _entries.value = (without + entry).sortedByDescending { it.createdAt }
+    }
+
+    override fun delete(id: String) {
+        _entries.value = _entries.value.filterNot { it.id == id }
     }
 
     companion object {
@@ -45,14 +54,14 @@ class InMemoryDiaryRepository(
 fun newEntry(
     text: String,
     photos: List<String>,
-    mood: Mood?,
     tags: List<String>,
+    place: String?,
     now: LocalDateTime = LocalDateTime.now(),
 ): DiaryEntry = DiaryEntry(
     id = "entry-${now.toLocalDate()}-${System.currentTimeMillis()}",
     createdAt = now,
     text = text.trim(),
     photos = photos,
-    mood = mood,
     tags = tags,
+    place = place,
 )

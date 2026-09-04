@@ -46,7 +46,9 @@ import com.moodiary.app.ui.theme.MoodiaryType
 @Composable
 fun ProfileScreen(
     entries: List<DiaryEntry>,
+    updateVersion: String?,
     onExport: () -> Unit,
+    onCheckUpdate: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -131,7 +133,16 @@ fun ProfileScreen(
                 iconRes = R.drawable.ic_lock,
                 title = stringResource(R.string.profile_lock),
                 detail = stringResource(R.string.profile_lock_value),
-                showDivider = false,
+            )
+            RowDivider()
+            SettingRow(
+                iconRes = R.drawable.ic_update,
+                title = stringResource(R.string.profile_check_update),
+                detail = updateVersion?.let { stringResource(R.string.profile_update_available, it) }
+                    ?: stringResource(R.string.profile_update_none),
+                detailColor = if (updateVersion != null) MoodiaryColors.AccentText else MoodiaryColors.TextMuted,
+                showDot = updateVersion != null,
+                onClick = onCheckUpdate,
             )
         }
         Spacer(Modifier.height(24.dp))
@@ -170,7 +181,8 @@ private fun SettingRow(
     iconRes: Int,
     title: String,
     detail: String? = null,
-    showDivider: Boolean = true,
+    detailColor: Color = MoodiaryColors.TextMuted,
+    showDot: Boolean = false,
     onClick: (() -> Unit)? = null,
 ) {
     Row(
@@ -194,7 +206,16 @@ private fun SettingRow(
             modifier = Modifier.weight(1f),
         )
         detail?.let {
-            Text(it, style = MoodiaryType.LabelMedium, color = MoodiaryColors.TextMuted)
+            if (showDot) {
+                Box(
+                    Modifier
+                        .size(6.dp)
+                        .clip(CircleShape)
+                        .background(MoodiaryColors.Accent),
+                )
+                Spacer(Modifier.width(6.dp))
+            }
+            Text(it, style = MoodiaryType.LabelMedium, color = detailColor)
             Spacer(Modifier.width(6.dp))
         }
         Icon(
