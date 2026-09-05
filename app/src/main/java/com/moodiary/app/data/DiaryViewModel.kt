@@ -26,6 +26,7 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
     private val placeSource: PlaceSource = GeocoderPlaceSource(application)
     private val updateChecker: UpdateChecker = StubUpdateChecker
     private val aiSettings = AiSettings(application)
+    private val insightCache = InsightCache(application)
     private val insightGenerator: InsightGenerator = DeepSeekInsightGenerator { aiSettings.apiKey }
 
     val entries get() = repository.entries
@@ -224,7 +225,7 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
     val insights = mutableStateMapOf<ReviewPeriod, InsightState>()
 
     /** Fingerprint of the entries each card's current text was generated from. */
-    private val insightSources = HashMap<ReviewPeriod, List<String>>()
+    private val insightSources = HashMap<ReviewPeriod, String>()
     private val insightJobs = HashMap<ReviewPeriod, Job>()
 
     fun refreshInsights(force: Boolean = false) {
@@ -239,8 +240,20 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
     fun refreshInsight(period: ReviewPeriod, force: Boolean = false) {
         val range = period.range()
         val span = entries.value.filter { it.date in range }
-        val fingerprint = span.map { "${it.id}:${it.text.hashCode()}:${it.tags}:${it.place}:${it.photos.size}" }
+        val fingerprint = span.joinToString("|") {
+            "${it.id}:${it.text.hashCode()}:${it.tags}:${it.place}:${it.photos.size}"
+        }
         val current = insights[period] ?: InsightState.Idle
+
+        // First look in this process: a review generated last time for exactly these
+        // entries is still right, so show it without a request.
+        if (!force && insightSources[period] == null) {
+            insightCache[period]?.takeIf { it.fingerprint == fingerprint }?.let { cached ->
+                insightSources[period] = fingerprint
+                insights[period] = InsightState.Ready(cached.text)
+                return
+            }
+        }
 
         val stale = fingerprint != insightSources[period]
         val settled = current is InsightState.Ready || current is InsightState.NoEntries
@@ -257,7 +270,9 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
         insights[period] = InsightState.Loading
         insightJobs[period] = viewModelScope.launch {
             insights[period] = try {
-                InsightState.Ready(insightGenerator.review(period, span, range))
+                val text = insightGenerator.review(period, span, range)
+                insightCache.put(period, fingerprint, text)
+                InsightState.Ready(text)
             } catch (e: InsightException) {
                 when (e.message) {
                     DeepSeekInsightGenerator.NO_KEY -> InsightState.NoKey
