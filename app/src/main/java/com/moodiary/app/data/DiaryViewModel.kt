@@ -21,7 +21,8 @@ import java.time.YearMonth
  */
 class DiaryViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repository: DiaryRepository = InMemoryDiaryRepository.shared
+    private val repository: DiaryRepository = RoomDiaryRepository.get(application)
+    private val photoStore = PhotoStore(application)
     // Reverse geocoding is a platform service, so it needs the application context.
     private val placeSource: PlaceSource = GeocoderPlaceSource(application)
     private val updateChecker: UpdateChecker = StubUpdateChecker
@@ -61,12 +62,25 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
         if (!draftTags.remove(tag)) draftTags.add(tag)
     }
 
+    /**
+     * Copies the picked photos into app storage first (see [PhotoStore]) — the picker's
+     * URIs would not survive a restart — then attaches the copies to the draft.
+     */
     fun addDraftPhotos(uris: List<String>) {
-        uris.forEach { if (it !in draftPhotos) draftPhotos.add(it) }
+        viewModelScope.launch {
+            photoStore.import(uris).forEach { if (it !in draftPhotos) draftPhotos.add(it) }
+        }
     }
 
     fun removeDraftPhoto(uri: String) {
         draftPhotos.remove(uri)
+        releasePhotos(listOf(uri))
+    }
+
+    /** Deletes local copies that no saved entry refers to any more. */
+    private fun releasePhotos(uris: Collection<String>) {
+        val inUse = entries.value.flatMapTo(HashSet()) { it.photos }
+        photoStore.delete(uris.filterNot { it in inUse })
     }
 
     /** Opens the editor on a blank draft. */
@@ -91,6 +105,7 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun clearDraft() {
+        releasePhotos(draftPhotos.toList())
         editingId = null
         editingCreatedAt = null
         draftText = ""
@@ -120,12 +135,20 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
                 place = draftPlace,
             )
         }
+        // Photos dropped while editing are nobody's now.
+        entries.value.firstOrNull { it.id == entry.id }
+            ?.let { old -> photoStore.delete(old.photos - entry.photos.toSet()) }
         repository.upsert(entry)
+        // The remaining copies belong to the entry; the write is asynchronous, so hand
+        // them off before clearDraft() gets a chance to treat them as orphans.
+        draftPhotos.clear()
         clearDraft()
     }
 
     fun deleteEntry(id: String) {
+        val entry = entries.value.firstOrNull { it.id == id }
         repository.delete(id)
+        entry?.let { photoStore.delete(it.photos) }
     }
 
     /** Tags offered in the editor: the ones already in use, then the suggestions. */

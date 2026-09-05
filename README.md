@@ -72,10 +72,13 @@ exactly what moved.
 
 ## Data
 
-`InMemoryDiaryRepository` seeds 15 entries reproducing the sample diary in the
-design, anchored to *today* rather than to September 2026 so the timeline,
-calendar and charts stay alive whenever the app is opened. Entries added in the
-app live for the process lifetime.
+Entries live in a Room database (`RoomDiaryRepository`, `moodiary.db`). On first
+launch the table is seeded with 41 sample entries reproducing the design's diary
+and stretching eight months back, anchored to *today* rather than to September
+2026 so the timeline, calendar and reviews stay alive whenever the app is opened.
+Picked photos are copied into `filesDir/photos/` and stored as `file://` URIs —
+the photo picker's `content://` grants do not survive a restart.
+`InMemoryDiaryRepository` remains for previews and tests.
 
 `DiaryRepository` is an interface for exactly this reason — swapping in Room (or
 a Markdown-file-backed store) touches one class and nothing else.

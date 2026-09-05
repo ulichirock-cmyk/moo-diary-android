@@ -31,7 +31,7 @@ sdk.dir=/你的/android-sdk
 DEEPSEEK_API_KEY=sk-...   # 可选,洞察页的每周回顾用它调 deepseek-v4-flash;不填就在 App 里「我的 → AI 洞察」填
 ```
 
-AGP 8.7.2 / Kotlin 2.0.21 / Compose BOM 2024.10.01，minSdk 26、compileSdk 35。
+AGP 8.7.2 / Kotlin 2.0.21 / Compose BOM 2024.10.01 / Room 2.6.1（KSP），minSdk 26、compileSdk 35。
 
 **改完 UI 要真机验证，不要只看编译过没过。** 这个项目的 bug 大多是布局层面的
 （比如占位文字和输入框叠加错位），编译器不会报。
@@ -39,7 +39,7 @@ AGP 8.7.2 / Kotlin 2.0.21 / Compose BOM 2024.10.01，minSdk 26、compileSdk 35�
 ## 结构
 
 ```
-data/          日记模型、内存仓库、统计、Markdown 导出、DeepSeek 洞察生成（InsightGenerator）
+data/          日记模型、Room 仓库、照片落盘、统计、Markdown 导出、DeepSeek 洞察生成与缓存
 ui/theme/      Color.kt 和 Type.kt 是设计 token 的落点
 ui/components/ 卡片、胶囊、照片块、底部栏
 ui/screens/    十二屏，文件名对应设计稿编号（07/08/09 同在 DetailScreen.kt）
@@ -47,8 +47,10 @@ ui/map/        自绘的 OSM 瓦片地图：投影、相机、瓦片缓存
 ui/nav/        MoodiaryApp.kt —— 四个 tab + 一个浮层back stack（最深三层：编辑→地点→地图）
 ```
 
-`DiaryRepository` 是接口，当前实现是进程内存储（`InMemoryDiaryRepository`），
-换 Room 或文件存储只需要动这一个类。
+`DiaryRepository` 是接口，当前实现是 Room（`RoomDiaryRepository`，库文件 `moodiary.db`，
+首次建库灌入种子日记）；`InMemoryDiaryRepository` 留给预览和测试。
+选中的照片会复制进 `filesDir/photos/`，库里存 `file://` 路径（`PhotoStore`）——
+相册选择器给的 `content://` URI 重启后就失效，直接存进库等于没存。
 
 ## 已知的、有意为之的偏离
 
