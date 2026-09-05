@@ -51,16 +51,23 @@ class InMemoryDiaryRepository(
 
 /** Builds an entry with a fresh id and the current timestamp. */
 fun newEntry(
-    text: String,
-    photos: List<String>,
+    blocks: List<Block>,
     tags: List<String>,
     place: String?,
     now: LocalDateTime = LocalDateTime.now(),
 ): DiaryEntry = DiaryEntry(
     id = "entry-${now.toLocalDate()}-${System.currentTimeMillis()}",
     createdAt = now,
-    text = text.trim(),
-    photos = photos,
+    blocks = blocks,
     tags = tags,
     place = place,
 )
+
+/** [newEntry] for callers with one text and a photo list. */
+fun newEntry(
+    text: String,
+    photos: List<String>,
+    tags: List<String>,
+    place: String?,
+    now: LocalDateTime = LocalDateTime.now(),
+): DiaryEntry = newEntry(blocksOf(text, photos), tags, place, now)

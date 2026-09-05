@@ -33,9 +33,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.moodiary.app.R
+import com.moodiary.app.data.Block
 import com.moodiary.app.data.DiaryEntry
 import com.moodiary.app.ui.Fmt
 import com.moodiary.app.ui.components.EntryPhoto
+import com.moodiary.app.ui.components.PhotoCaption
 import com.moodiary.app.ui.components.TagChip
 import com.moodiary.app.ui.theme.MoodiaryColors
 import com.moodiary.app.ui.theme.MoodiaryType
@@ -99,22 +101,29 @@ fun DetailScreen(
                     )
                 }
 
-                entry.photos.forEach { photo ->
-                    EntryPhoto(
-                        photo,
-                        Modifier
-                            .fillMaxWidth()
-                            .height(236.dp)
-                            .clip(RoundedCornerShape(12.dp)),
-                    )
-                }
-
-                if (entry.text.isNotBlank()) {
-                    Text(
-                        entry.text,
-                        style = MoodiaryType.BodyDetail,
-                        color = MoodiaryColors.TextPrimary,
-                    )
+                // 文中图: paragraphs and photos in the entry's own order. A run of
+                // photos is stacked tight; the 24dp of the outer column separates runs
+                // from prose.
+                entry.blocks.runs().forEach { run ->
+                    when (run) {
+                        is Block.Text -> Text(
+                            run.text,
+                            style = MoodiaryType.BodyDetail,
+                            color = MoodiaryColors.TextPrimary,
+                        )
+                        is PhotoRun -> Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            run.photos.forEach { photo ->
+                                EntryPhoto(
+                                    photo.uri,
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .height(236.dp)
+                                        .clip(RoundedCornerShape(12.dp)),
+                                )
+                                photo.caption?.let { PhotoCaption(it) }
+                            }
+                        }
+                    }
                 }
 
                 if (entry.tags.isNotEmpty()) {
@@ -418,4 +427,27 @@ private fun Scrim(onDismiss: () -> Unit) {
                 onClick = onDismiss,
             ),
     )
+}
+
+/** Consecutive photos of a body, folded into one item so they can be laid out as a group. */
+private class PhotoRun(val photos: List<Block.Photo>)
+
+private fun List<Block>.runs(): List<Any> = buildList {
+    var pending = ArrayList<Block.Photo>()
+    fun flush() {
+        if (pending.isNotEmpty()) {
+            add(PhotoRun(pending))
+            pending = ArrayList()
+        }
+    }
+    for (block in this@runs) {
+        when (block) {
+            is Block.Photo -> pending.add(block)
+            is Block.Text -> {
+                flush()
+                add(block)
+            }
+        }
+    }
+    flush()
 }

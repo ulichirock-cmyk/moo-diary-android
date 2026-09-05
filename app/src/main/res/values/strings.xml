@@ -28,6 +28,9 @@
     <string name="editor_place_empty">添加地点</string>
     <string name="editor_new_tag">+ 新标签</string>
     <string name="editor_new_tag_hint">标签名</string>
+    <string name="editor_caption_title">照片标注</string>
+    <string name="editor_caption_hint">一句小字,留空则不显示</string>
+    <string name="editor_remove_photo">删除照片</string>
 
     <!-- Calendar -->
     <string name="calendar_title">日历</string>

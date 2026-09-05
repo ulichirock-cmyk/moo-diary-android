@@ -7,6 +7,8 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
@@ -46,12 +48,38 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
         private set
     private var editingCreatedAt: LocalDateTime? = null
 
-    var draftText by mutableStateOf("")
-        private set
+    /**
+     * The body being written, as 文中图 blocks. Invariants the editor relies on: the
+     * list starts and ends with a text block, and blocks alternate — never two texts
+     * (a photo removed from between two paragraphs leaves one paragraph, not two) and
+     * never two photos (there is always a field between photos to write in, or to put
+     * the caret in and insert more). Empty fields are dropped on publish.
+     */
+    val draftBlocks = mutableStateListOf<DraftBlock>(DraftBlock.Text(0L, TextFieldValue()))
+    private var nextBlockKey = 1L
     var draftPlace by mutableStateOf<String?>(null)
         private set
-    val draftPhotos = mutableStateListOf<String>()
     val draftTags = mutableStateListOf<String>()
+
+    /** The text block the caret was last in. Set on focus gain only — losing focus to the picker must not forget it. */
+    private var focusedTextKey: Long? = null
+
+    /** A block the editor should move focus to once it exists (the field after freshly inserted photos). */
+    var pendingFocusKey by mutableStateOf<Long?>(null)
+        private set
+
+    /** Where the next photos go, captured when 添加照片 is tapped, before the picker takes focus away. */
+    private var photoInsertPoint: Pair<Long, Int>? = null
+
+    val draftText: String
+        get() = draftBlocks.filterIsInstance<DraftBlock.Text>()
+            .map { it.value.text.trim() }.filter { it.isNotEmpty() }.joinToString("\n\n")
+    val draftPhotos: List<String>
+        get() = draftBlocks.filterIsInstance<DraftBlock.Photo>().map { it.uri }
+
+    /** True while nothing has been written or added — when the placeholder shows. */
+    val draftIsBlank: Boolean
+        get() = draftBlocks.size == 1 && (draftBlocks[0] as? DraftBlock.Text)?.value?.text?.isEmpty() == true
 
     /** The timestamp the editor header shows: the entry's own when editing, else now. */
     fun draftTimestamp(fallback: LocalDateTime): LocalDateTime = editingCreatedAt ?: fallback
@@ -59,8 +87,63 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
     val canPublish: Boolean
         get() = draftText.isNotBlank() || draftPhotos.isNotEmpty()
 
-    fun onDraftTextChange(value: String) {
-        draftText = value
+    fun onDraftBlockChange(key: Long, value: TextFieldValue) {
+        val index = draftBlocks.indexOfFirst { it.key == key }
+        if (index >= 0) draftBlocks[index] = DraftBlock.Text(key, value)
+    }
+
+    fun onTextBlockFocused(key: Long) {
+        focusedTextKey = key
+        if (pendingFocusKey == key) pendingFocusKey = null
+    }
+
+    /** Called when 添加照片 is tapped: photos will split the focused paragraph at the caret. */
+    fun markPhotoInsertPoint() {
+        val block = draftBlocks.filterIsInstance<DraftBlock.Text>()
+            .let { texts -> texts.firstOrNull { it.key == focusedTextKey } ?: texts.last() }
+        photoInsertPoint = block.key to block.value.selection.end.coerceIn(0, block.value.text.length)
+    }
+
+    private fun newTextBlock(text: String = "", cursor: Int = text.length) =
+        DraftBlock.Text(nextBlockKey++, TextFieldValue(text, TextRange(cursor)))
+
+    /** Splits the marked paragraph at the caret and drops [uris] in between; focus goes to the tail. */
+    private fun insertPhotos(uris: List<String>) {
+        if (uris.isEmpty()) return
+        val (key, offset) = photoInsertPoint
+            ?: draftBlocks.filterIsInstance<DraftBlock.Text>().last().let { it.key to it.value.text.length }
+        photoInsertPoint = null
+        val index = draftBlocks.indexOfFirst { it.key == key }.takeIf { it >= 0 } ?: return
+        val block = draftBlocks[index] as? DraftBlock.Text ?: return
+        val at = offset.coerceIn(0, block.value.text.length)
+        val head = block.value.text.substring(0, at)
+        val tail = newTextBlock(block.value.text.substring(at), cursor = 0)
+        draftBlocks[index] = DraftBlock.Text(key, TextFieldValue(head, TextRange(head.length)))
+        val photos = uris.filter { it !in draftPhotos }.map { DraftBlock.Photo(nextBlockKey++, it) }
+        draftBlocks.addAll(index + 1, photos + tail)
+        normalizeDraft()
+        pendingFocusKey = tail.key
+    }
+
+    /** Re-establishes the invariants after a load or a removal. */
+    private fun normalizeDraft() {
+        if (draftBlocks.firstOrNull() !is DraftBlock.Text) draftBlocks.add(0, newTextBlock())
+        var i = 1
+        while (i < draftBlocks.size) {
+            val prev = draftBlocks[i - 1]
+            val cur = draftBlocks[i]
+            if (prev is DraftBlock.Text && cur is DraftBlock.Text) {
+                val joined = listOf(prev.value.text, cur.value.text).filter { it.isNotEmpty() }.joinToString("\n")
+                draftBlocks[i - 1] = DraftBlock.Text(prev.key, TextFieldValue(joined, TextRange(prev.value.text.length)))
+                draftBlocks.removeAt(i)
+            } else if (prev is DraftBlock.Photo && cur is DraftBlock.Photo) {
+                draftBlocks.add(i, newTextBlock())
+                i += 2
+            } else {
+                i++
+            }
+        }
+        if (draftBlocks.last() !is DraftBlock.Text) draftBlocks.add(newTextBlock())
     }
 
     fun onDraftTagClick(tag: String) {
@@ -72,14 +155,22 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
      * URIs would not survive a restart — then attaches the copies to the draft.
      */
     fun addDraftPhotos(uris: List<String>) {
-        viewModelScope.launch {
-            photoStore.import(uris).forEach { if (it !in draftPhotos) draftPhotos.add(it) }
-        }
+        viewModelScope.launch { insertPhotos(photoStore.import(uris)) }
     }
 
-    fun removeDraftPhoto(uri: String) {
-        draftPhotos.remove(uri)
-        releasePhotos(listOf(uri))
+    /** 标注: the small line under a photo. Blank clears it. */
+    fun setPhotoCaption(key: Long, caption: String) {
+        val index = draftBlocks.indexOfFirst { it.key == key }
+        val photo = draftBlocks.getOrNull(index) as? DraftBlock.Photo ?: return
+        draftBlocks[index] = photo.copy(caption = caption.trim().takeIf { it.isNotEmpty() })
+    }
+
+    fun removeDraftPhoto(key: Long) {
+        val index = draftBlocks.indexOfFirst { it.key == key }
+        val photo = draftBlocks.getOrNull(index) as? DraftBlock.Photo ?: return
+        draftBlocks.removeAt(index)
+        normalizeDraft()
+        releasePhotos(listOf(photo.uri))
     }
 
     /** Deletes local copies that no saved entry refers to any more. */
@@ -146,22 +237,42 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
     fun startEditing(entry: DiaryEntry) {
         editingId = entry.id
         editingCreatedAt = entry.createdAt
-        draftText = entry.text
+        draftBlocks.clear()
+        entry.blocks.forEach { block ->
+            draftBlocks.add(
+                when (block) {
+                    is Block.Text -> newTextBlock(block.text)
+                    is Block.Photo -> DraftBlock.Photo(nextBlockKey++, block.uri, block.caption)
+                },
+            )
+        }
+        normalizeDraft()
+        focusedTextKey = null
+        pendingFocusKey = null
         draftPlace = entry.place
-        draftPhotos.clear()
-        draftPhotos.addAll(entry.photos)
         draftTags.clear()
         draftTags.addAll(entry.tags)
     }
 
     fun clearDraft() {
-        releasePhotos(draftPhotos.toList())
+        releasePhotos(draftPhotos)
         editingId = null
         editingCreatedAt = null
-        draftText = ""
+        draftBlocks.clear()
+        draftBlocks.add(newTextBlock())
+        focusedTextKey = null
+        pendingFocusKey = null
+        photoInsertPoint = null
         draftPlace = null
-        draftPhotos.clear()
         draftTags.clear()
+    }
+
+    /** The draft as it will be saved: blank paragraphs dropped, trailing whitespace trimmed. */
+    private fun draftToBlocks(): List<Block> = draftBlocks.mapNotNull { block ->
+        when (block) {
+            is DraftBlock.Text -> block.value.text.trim().takeIf { it.isNotEmpty() }?.let { Block.Text(it) }
+            is DraftBlock.Photo -> Block.Photo(block.uri, block.caption?.trim()?.takeIf { it.isNotEmpty() })
+        }
     }
 
     /** Saves the draft and clears it. No-op when [canPublish] is false. */
@@ -172,15 +283,13 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
             DiaryEntry(
                 id = existingId,
                 createdAt = editingCreatedAt ?: LocalDateTime.now(),
-                text = draftText.trim(),
-                photos = draftPhotos.toList(),
+                blocks = draftToBlocks(),
                 tags = draftTags.toList(),
                 place = draftPlace,
             )
         } else {
             newEntry(
-                text = draftText,
-                photos = draftPhotos.toList(),
+                blocks = draftToBlocks(),
                 tags = draftTags.toList(),
                 place = draftPlace,
             )
@@ -191,7 +300,7 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
         repository.upsert(entry)
         // The remaining copies belong to the entry; the write is asynchronous, so hand
         // them off before clearDraft() gets a chance to treat them as orphans.
-        draftPhotos.clear()
+        draftBlocks.removeAll { it is DraftBlock.Photo }
         clearDraft()
         if (autoTagEnabled) autoTag(entry)
     }
@@ -505,4 +614,16 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
         // The app is on screen when a view model is made, so a foreground start is allowed.
         if (mcpEnabled) DiaryMcpService.start(getApplication())
     }
+}
+
+/**
+ * A block of the editor's draft. [key] is stable for the life of the draft so Compose
+ * can keep one text field's focus and selection per paragraph while photos move around
+ * it; it is not persisted.
+ */
+sealed interface DraftBlock {
+    val key: Long
+
+    data class Text(override val key: Long, val value: TextFieldValue) : DraftBlock
+    data class Photo(override val key: Long, val uri: String, val caption: String? = null) : DraftBlock
 }

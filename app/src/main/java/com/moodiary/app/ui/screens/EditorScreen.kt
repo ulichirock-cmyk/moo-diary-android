@@ -5,7 +5,9 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +38,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -44,20 +47,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.moodiary.app.R
 import com.moodiary.app.data.DiaryViewModel
+import com.moodiary.app.data.DraftBlock
 import com.moodiary.app.ui.Fmt
 import com.moodiary.app.ui.components.Eyebrow
 import com.moodiary.app.ui.components.ImageShape
 import com.moodiary.app.ui.components.Pill
 import com.moodiary.app.ui.components.PillShape
-import com.moodiary.app.ui.components.SquarePhoto
+import com.moodiary.app.ui.components.EntryPhoto
+import com.moodiary.app.ui.components.PhotoCaption
 import com.moodiary.app.ui.components.dashedBorder
 import com.moodiary.app.ui.theme.MoodiaryColors
 import com.moodiary.app.ui.theme.MoodiaryType
@@ -69,6 +76,10 @@ import java.time.LocalDateTime
  * The design replaced the mood picker with a place row, and removed the
  * "草稿已自动保存" footer. The draft still lives in [DiaryViewModel], which is what
  * lets the place picker cover this screen and hand a name back.
+ *
+ * The body departs from the design's "text field, then a photo grid": photos sit in
+ * the prose where they were added (文中图), so the field is a column of paragraphs
+ * and photos. The dashed 添加照片 tile keeps its place below the body.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -83,6 +94,7 @@ fun EditorScreen(
     val stamp = vm.draftTimestamp(now)
     val editing = vm.editingId != null
     var showTagDialog by remember { mutableStateOf(false) }
+    var captioning by remember { mutableStateOf<DraftBlock.Photo?>(null) }
     val bodyFocus = remember { FocusRequester() }
 
     LaunchedEffect(Unit) { bodyFocus.requestFocus() }
@@ -113,40 +125,45 @@ fun EditorScreen(
             modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp),
             verticalArrangement = Arrangement.spacedBy(26.dp),
         ) {
-            BasicTextField(
-                value = vm.draftText,
-                onValueChange = vm::onDraftTextChange,
-                textStyle = MoodiaryType.BodyEditor.copy(color = MoodiaryColors.TextPrimary),
-                cursorBrush = SolidColor(MoodiaryColors.Accent),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .defaultMinSize(minHeight = 120.dp)
-                    .focusRequester(bodyFocus),
-                decorationBox = { inner ->
-                    Box {
-                        if (vm.draftText.isEmpty()) {
-                            // 写作引导: today's question stands in for the placeholder on a
-                            // new entry, so the hint is the prompt and nothing else is added.
-                            Text(
-                                vm.writingPromptHint ?: stringResource(R.string.editor_placeholder),
-                                style = MoodiaryType.BodyEditor,
-                                color = MoodiaryColors.TextMuted,
+            // 文中图: the body is a column of paragraphs and photos in reading order.
+            // Each paragraph is its own field keyed by the draft block, so focus and
+            // selection stay with the paragraph while photos are inserted around it.
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                vm.draftBlocks.forEachIndexed { index, block ->
+                    key(block.key) {
+                        when (block) {
+                            is DraftBlock.Text -> ParagraphField(
+                                block = block,
+                                first = index == 0,
+                                placeholder = if (index == 0 && vm.draftIsBlank) {
+                                    vm.writingPromptHint ?: stringResource(R.string.editor_placeholder)
+                                } else {
+                                    null
+                                },
+                                requestFocus = vm.pendingFocusKey == block.key,
+                                onValueChange = { vm.onDraftBlockChange(block.key, it) },
+                                onFocused = { vm.onTextBlockFocused(block.key) },
+                                focusRequester = if (index == 0) bodyFocus else null,
+                            )
+                            is DraftBlock.Photo -> DraftPhoto(
+                                block = block,
+                                onOpen = { captioning = block },
                             )
                         }
-                        inner()
                     }
-                },
-            )
+                }
+            }
 
-            PhotoGrid(
-                photos = vm.draftPhotos,
-                onRemove = vm::removeDraftPhoto,
-                onAdd = {
+            // The dashed tile stays where the design put it; photos land at the caret.
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                AddPhotoTile(Modifier.weight(1f)) {
+                    vm.markPhotoInsertPoint()
                     photoPicker.launch(
                         PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
                     )
-                },
-            )
+                }
+                Spacer(Modifier.weight(2f))
+            }
 
             Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
                 Eyebrow(stringResource(R.string.editor_section_place))
@@ -181,6 +198,21 @@ fun EditorScreen(
             }
         }
         Spacer(Modifier.height(40.dp))
+    }
+
+    captioning?.let { photo ->
+        CaptionDialog(
+            initial = photo.caption.orEmpty(),
+            onDismiss = { captioning = null },
+            onConfirm = { caption ->
+                captioning = null
+                vm.setPhotoCaption(photo.key, caption)
+            },
+            onRemove = {
+                captioning = null
+                vm.removeDraftPhoto(photo.key)
+            },
+        )
     }
 
     if (showTagDialog) {
@@ -274,28 +306,104 @@ private fun PlaceRow(place: String?, onClick: () -> Unit) {
     }
 }
 
-/** Three-up photo grid: existing photos, then the dashed "添加照片" tile. */
+/**
+ * A photo in the draft with its 标注 under it. Tap or long-press opens [CaptionDialog],
+ * which is also where the photo is removed — a bare tap deleting a photo was too easy
+ * to do by accident once photos sat among the paragraphs.
+ */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun PhotoGrid(
-    photos: List<String>,
-    onRemove: (String) -> Unit,
-    onAdd: () -> Unit,
-) {
-    val cells: List<String?> = photos + listOf(null)
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        cells.chunked(3).forEach { row ->
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                row.forEach { cell ->
-                    if (cell == null) {
-                        AddPhotoTile(Modifier.weight(1f), onAdd)
-                    } else {
-                        SquarePhoto(cell, Modifier.weight(1f).clickable { onRemove(cell) })
-                    }
-                }
-                repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
-            }
-        }
+private fun DraftPhoto(block: DraftBlock.Photo, onOpen: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        EntryPhoto(
+            block.uri,
+            Modifier
+                .fillMaxWidth()
+                .height(170.dp)
+                .combinedClickable(onClick = onOpen, onLongClick = onOpen),
+        )
+        block.caption?.let { PhotoCaption(it) }
     }
+}
+
+/** 照片标注: caption text, plus the one destructive action a photo has. */
+@Composable
+private fun CaptionDialog(
+    initial: String,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit,
+    onRemove: () -> Unit,
+) {
+    var value by remember { mutableStateOf(initial) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = MoodiaryColors.Surface,
+        shape = RoundedCornerShape(CornerSize(14.dp)),
+        title = { Text(stringResource(R.string.editor_caption_title), style = MoodiaryType.TitleSmall) },
+        text = {
+            OutlinedTextField(
+                value = value,
+                onValueChange = { value = it },
+                singleLine = true,
+                placeholder = { Text(stringResource(R.string.editor_caption_hint)) },
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(value) }) {
+                Text(stringResource(R.string.action_confirm), color = MoodiaryColors.AccentText)
+            }
+        },
+        dismissButton = {
+            Row {
+                TextButton(onClick = onRemove) {
+                    Text(stringResource(R.string.editor_remove_photo), color = MoodiaryColors.Destructive)
+                }
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.action_cancel), color = MoodiaryColors.TextTertiary)
+                }
+            }
+        },
+    )
+}
+
+/**
+ * One paragraph of the draft. [first] gets the tall minimum height of the design's
+ * body field; later paragraphs — including the empty one after a photo — are one line
+ * tall until written in, so a run of photos does not open up between them.
+ */
+@Composable
+private fun ParagraphField(
+    block: DraftBlock.Text,
+    first: Boolean,
+    placeholder: String?,
+    requestFocus: Boolean,
+    onValueChange: (TextFieldValue) -> Unit,
+    onFocused: () -> Unit,
+    focusRequester: FocusRequester?,
+) {
+    val requester = focusRequester ?: remember { FocusRequester() }
+    LaunchedEffect(requestFocus) {
+        if (requestFocus) requester.requestFocus()
+    }
+    BasicTextField(
+        value = block.value,
+        onValueChange = onValueChange,
+        textStyle = MoodiaryType.BodyEditor.copy(color = MoodiaryColors.TextPrimary),
+        cursorBrush = SolidColor(MoodiaryColors.Accent),
+        modifier = Modifier
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = if (first) 120.dp else 30.dp)
+            .focusRequester(requester)
+            .onFocusChanged { if (it.isFocused) onFocused() },
+        decorationBox = { inner ->
+            Box {
+                if (placeholder != null && block.value.text.isEmpty()) {
+                    Text(placeholder, style = MoodiaryType.BodyEditor, color = MoodiaryColors.TextMuted)
+                }
+                inner()
+            }
+        },
+    )
 }
 
 @Composable

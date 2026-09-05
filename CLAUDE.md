@@ -76,6 +76,11 @@ ui/nav/        MoodiaryApp.kt —— 四个 tab + 一个浮层back stack（最�
   `claude mcp add --transport http …` 直连，工具就是问问日记那套 search / get 再加一个 overview
   （`data/DiaryTools.kt` 是两边共用的实现，`data/DiaryMcpServer.kt` 手写 HTTP 不引库，
   `DiaryMcpService` 是 specialUse 前台服务）。局域网明文，默认关，用完关
+- 文中图：日记正文是「文字 / 照片」块的有序列表（`DiaryEntry.blocks`，Room 里 `blocks` JSON 列，
+  版本 2 迁移加的，老行读成「先文字后照片」）。编辑器里正文是一列段落输入框和照片，点「添加照片」
+  把照片插在光标处、把段落一分为二；点或长按照片弹「照片标注」，可写一行小字（存在
+  `Block.Photo.caption`），删除照片也在这个弹窗里；详情页按块顺序渲染，连续照片紧挨着堆、标注在图下。设计稿的详情页是
+  「照片组在上、正文在下」，这是有意偏离。时间线卡片不变，仍按派生的 `text` / `photos` 画
 - 编辑器开空白而不是预填草稿；草稿存在 ViewModel 里
 - 统计数字实算，不用设计稿里的 216 / 12 / 483
 - "Face ID" 改成"生物识别"

@@ -125,6 +125,14 @@ touched one class and nothing else.
   has no place for one, so 我的 → 数据 gains an "AI 洞察" row that opens a key dialog.
   Developers can skip the dialog by putting `DEEPSEEK_API_KEY=sk-...` in
   `local.properties`.
+- **Photos sit in the prose (文中图).** An entry's body is an ordered list of text
+  and photo blocks (`DiaryEntry.blocks`, a JSON column added by the version-2 Room
+  migration; older rows read as text-then-photos). The editor is a column of
+  paragraph fields and photos: 添加照片 splits the paragraph at the caret and drops
+  the photos in; tapping or long-pressing a photo opens 照片标注 for a one-line
+  caption (`Block.Photo.caption`), which is also where a photo is removed. 日记详情 renders the blocks in order, with consecutive photos
+  stacked tight, instead of the design's photos-then-text. The timeline card is
+  unchanged and still draws the derived `text` and `photos`.
 - **The editor opens empty.** The design shows a draft mid-composition; a real
   editor starts blank. The draft is held in the view model, so leaving and coming
   back restores it — which is what "草稿已自动保存" promises.

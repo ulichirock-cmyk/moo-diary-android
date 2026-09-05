@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -16,9 +17,11 @@ import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.Text
 import coil.compose.AsyncImage
 import com.moodiary.app.R
 import com.moodiary.app.ui.theme.MoodiaryColors
+import com.moodiary.app.ui.theme.MoodiaryType
 
 /** The design desaturates every photo slightly (`filter: saturate(0.85)`). */
 private val Desaturate = ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0.85f) })
@@ -70,6 +73,17 @@ fun EntryPhotoBlock(photos: List<String>, modifier: Modifier = Modifier) {
             }
         }
     }
+}
+
+/** 照片标注 — the small muted line under a photo, in the editor and on 日记详情. */
+@Composable
+fun PhotoCaption(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text,
+        style = MoodiaryType.Caption,
+        color = MoodiaryColors.TextMuted,
+        modifier = modifier.padding(horizontal = 2.dp),
+    )
 }
 
 /** Square thumbnail used by the editor grid and the search results. */
