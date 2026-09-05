@@ -30,6 +30,7 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
     private val insightCache = InsightCache(application)
     private val insightGenerator: InsightGenerator = DeepSeekInsightGenerator { aiSettings.apiKey }
     private val assistant = DiaryAssistant { aiSettings.apiKey }
+    private val tagSuggester = TagSuggester { aiSettings.apiKey }
 
     val entries get() = repository.entries
 
@@ -144,6 +145,24 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
         // them off before clearDraft() gets a chance to treat them as orphans.
         draftPhotos.clear()
         clearDraft()
+        if (autoTagEnabled) autoTag(entry)
+    }
+
+    /**
+     * 自动标签 — runs after publish, off the UI thread, and adds what DeepSeek suggests
+     * to whatever the user picked. Re-reads the entry before writing so an edit made in
+     * the meantime is not clobbered; gives up quietly on any failure.
+     */
+    private fun autoTag(entry: DiaryEntry) {
+        if (entry.text.isBlank()) return
+        viewModelScope.launch {
+            val vocabulary = (entries.value.tagCounts().map { it.first } + SUGGESTED_TAGS).distinct()
+            val suggested = tagSuggester.suggest(entry.text, entry.tags, vocabulary)
+            if (suggested.isEmpty()) return@launch
+            val latest = entries.value.firstOrNull { it.id == entry.id } ?: entry
+            val merged = (latest.tags + suggested).distinct().take(MAX_TAGS_PER_ENTRY)
+            if (merged != latest.tags) repository.upsert(latest.copy(tags = merged))
+        }
     }
 
     fun deleteEntry(id: String) {
@@ -350,6 +369,14 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
     var hasApiKey by mutableStateOf(aiSettings.apiKey != null)
         private set
 
+    var autoTagEnabled by mutableStateOf(aiSettings.autoTag)
+        private set
+
+    fun setAutoTag(enabled: Boolean) {
+        aiSettings.autoTag = enabled
+        autoTagEnabled = enabled
+    }
+
     fun saveApiKey(key: String) {
         aiSettings.apiKey = key.takeIf { it.isNotBlank() }
         hasApiKey = aiSettings.apiKey != null
@@ -387,5 +414,9 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
 
     fun clearSearch() {
         searchQuery = ""
+    }
+
+    private companion object {
+        const val MAX_TAGS_PER_ENTRY = 4
     }
 }

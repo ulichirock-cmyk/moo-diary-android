@@ -100,6 +100,9 @@ a Markdown-file-backed store) touches one class and nothing else.
   DeepSeek gets two tools (search, fetch) instead of the diary text, and cites
   entries with `[[id]]` markers that become tappable date chips (`ChatScreen`,
   `data/DiaryAssistant.kt`). The conversation lives with the process only.
+- **自动标签.** A toggle on 我的 (on by default). After publish, DeepSeek picks
+  tags for the entry from the diary's existing vocabulary and adds them to the
+  user's own — never removes, at most four per entry (`data/TagSuggester.kt`).
 - **AI 洞察 has a settings row.** The review paragraphs on screen 05 are written by
   DeepSeek (`deepseek-v4-flash`), which needs an API key from somewhere. The design
   has no place for one, so 我的 → 数据 gains an "AI 洞察" row that opens a key dialog.

@@ -112,9 +112,11 @@ fun MoodiaryApp(vm: DiaryViewModel = viewModel()) {
                     entries = entries,
                     updateVersion = vm.availableUpdate?.version,
                     hasApiKey = vm.hasApiKey,
+                    autoTag = vm.autoTagEnabled,
                     onExport = { context.shareMarkdown(entries.toMarkdown()) },
                     onCheckUpdate = { push(Overlay.Update) },
                     onEditApiKey = { editingApiKey = true },
+                    onAutoTagChange = vm::setAutoTag,
                 )
             }
         }

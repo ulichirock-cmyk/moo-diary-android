@@ -65,9 +65,11 @@ fun ProfileScreen(
     entries: List<DiaryEntry>,
     updateVersion: String?,
     hasApiKey: Boolean,
+    autoTag: Boolean,
     onExport: () -> Unit,
     onCheckUpdate: () -> Unit,
     onEditApiKey: () -> Unit,
+    onAutoTagChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -159,6 +161,13 @@ fun ProfileScreen(
                 title = stringResource(R.string.profile_ai),
                 detail = stringResource(if (hasApiKey) R.string.profile_ai_configured else R.string.profile_ai_unset),
                 onClick = onEditApiKey,
+            )
+            RowDivider()
+            ToggleRow(
+                iconRes = R.drawable.ic_edit,
+                title = stringResource(R.string.profile_auto_tag),
+                checked = autoTag,
+                onCheckedChange = onAutoTagChange,
             )
             RowDivider()
             SettingRow(
@@ -369,6 +378,56 @@ private fun DialogButton(
             style = if (strong) MoodiaryType.SheetRowStrong else MoodiaryType.SheetRow,
             color = color,
         )
+    }
+}
+
+/**
+ * A settings row with a switch instead of a chevron. The design has no toggle, so this
+ * one is drawn from its tokens: a pill in Accent or Faint with a Surface knob.
+ */
+@Composable
+private fun ToggleRow(
+    iconRes: Int,
+    title: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onCheckedChange(!checked) }
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            painterResource(iconRes),
+            contentDescription = null,
+            tint = MoodiaryColors.TextTertiary,
+            modifier = Modifier.size(18.dp),
+        )
+        Spacer(Modifier.width(12.dp))
+        Text(
+            title,
+            style = MoodiaryType.TitleSmall,
+            color = MoodiaryColors.TextPrimary,
+            modifier = Modifier.weight(1f),
+        )
+        Box(
+            Modifier
+                .width(40.dp)
+                .height(22.dp)
+                .clip(CircleShape)
+                .background(if (checked) MoodiaryColors.Accent else MoodiaryColors.Faint)
+                .padding(2.dp),
+            contentAlignment = if (checked) Alignment.CenterEnd else Alignment.CenterStart,
+        ) {
+            Box(
+                Modifier
+                    .size(18.dp)
+                    .clip(CircleShape)
+                    .background(MoodiaryColors.Surface),
+            )
+        }
     }
 }
 

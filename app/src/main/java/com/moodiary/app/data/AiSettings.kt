@@ -20,10 +20,18 @@ class AiSettings(context: Context) {
             prefs.edit().putString(KEY_API_KEY, value?.trim()).apply()
         }
 
+    /** 自动标签: tag a freshly published entry from its text. On by default; needs a key to do anything. */
+    var autoTag: Boolean
+        get() = prefs.getBoolean(KEY_AUTO_TAG, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_AUTO_TAG, value).apply()
+        }
+
     /** True when the user set a key themselves (as opposed to the build-time default). */
     val hasUserKey: Boolean get() = !prefs.getString(KEY_API_KEY, null).isNullOrBlank()
 
     private companion object {
         const val KEY_API_KEY = "deepseek_api_key"
+        const val KEY_AUTO_TAG = "auto_tag"
     }
 }

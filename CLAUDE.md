@@ -66,6 +66,8 @@ ui/nav/        MoodiaryApp.kt —— 四个 tab + 一个浮层back stack（最�
 - 洞察页顶部有「问问日记」入口，进 `ChatScreen` 和 AI 对话找日记、问问题。模型只拿到
   search / get 两个工具，日记内容不进提示词；回答里的 `[[id]]` 引用渲染成日期胶囊，点进详情。
   对话只读、进程内保留、不落库（`data/DiaryAssistant.kt`）
+- 「我的」有「自动标签」开关（默认开）：发布后用 DeepSeek 按正文补标签，优先从已有标签库选，
+  只增不删，每篇最多 4 个（`data/TagSuggester.kt`）
 - 编辑器开空白而不是预填草稿；草稿存在 ViewModel 里
 - 统计数字实算，不用设计稿里的 216 / 12 / 483
 - "Face ID" 改成"生物识别"

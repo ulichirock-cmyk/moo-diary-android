@@ -80,6 +80,7 @@
     <string name="profile_check_update">检查更新</string>
     <string name="profile_ai">AI 洞察</string>
     <string name="profile_ai_configured">DeepSeek</string>
+    <string name="profile_auto_tag">自动标签</string>
     <string name="profile_ai_unset">未配置</string>
     <string name="profile_ai_dialog_title">DeepSeek API Key</string>
     <string name="profile_ai_dialog_body">每周回顾由 deepseek-v4-flash 生成。Key 只保存在这台设备上,日记正文会随请求发给 DeepSeek。</string>
