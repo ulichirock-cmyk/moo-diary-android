@@ -82,13 +82,6 @@ fun InsightsScreen(
                 .padding(horizontal = 14.dp, vertical = 11.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(
-                painterResource(R.drawable.ic_sparkles),
-                contentDescription = null,
-                tint = MoodiaryColors.Accent,
-                modifier = Modifier.size(15.dp),
-            )
-            Spacer(Modifier.width(8.dp))
             Text(
                 stringResource(R.string.chat_entry_hint),
                 style = MoodiaryType.Label,

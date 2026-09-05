@@ -158,33 +158,8 @@ fun ChatScreen(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun EmptyPrompt(onPick: (String) -> Unit, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.fillMaxWidth().padding(horizontal = 32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Box(
-            Modifier
-                .size(64.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(MoodiaryColors.AccentSoft),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painterResource(R.drawable.ic_sparkles),
-                contentDescription = null,
-                tint = MoodiaryColors.Accent,
-                modifier = Modifier.size(26.dp),
-            )
-        }
-        Spacer(Modifier.height(16.dp))
-        Text(
-            stringResource(R.string.chat_empty_title),
-            style = MoodiaryType.LabelMedium,
-            color = MoodiaryColors.TextMuted,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(20.dp))
+    // Just the suggestions, centred in the empty space — no illustration, no caption.
+    Box(modifier.fillMaxWidth().padding(horizontal = 32.dp), contentAlignment = Alignment.Center) {
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
             verticalArrangement = Arrangement.spacedBy(8.dp),

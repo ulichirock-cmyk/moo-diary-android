@@ -59,11 +59,10 @@
     <string name="insights_regenerate">重新生成</string>
     <string name="chat_title">问问日记</string>
     <string name="chat_entry_hint">问问这些日记…</string>
-    <string name="chat_input_hint">比如:上次去青岛是什么时候</string>
+    <string name="chat_input_hint">上次去青岛是什么时候</string>
     <string name="chat_send">发送</string>
     <string name="chat_clear">清空</string>
     <string name="chat_thinking">正在翻日记…</string>
-    <string name="chat_empty_title">日记都在这里,想找什么直接问</string>
     <string name="chat_suggestion_1">上次去青岛是什么时候</string>
     <string name="chat_suggestion_2">今年跑了几次步</string>
     <string name="chat_suggestion_3">小七的婚礼那篇</string>
