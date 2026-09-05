@@ -36,6 +36,8 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -54,7 +56,7 @@ import com.moodiary.app.ui.theme.MoodiaryColors
 import com.moodiary.app.ui.theme.MoodiaryType
 
 /**
- * 06 我的 — counts, Markdown export, reminder and app lock.
+ * 06 我的 — counts, reminder, app lock and the AI settings.
  *
  * The AI 洞察 row is not in the design: the weekly review needs a DeepSeek key from
  * somewhere, and a settings row in the existing 数据 group is the smallest place to put it.
@@ -66,10 +68,14 @@ fun ProfileScreen(
     updateVersion: String?,
     hasApiKey: Boolean,
     autoTag: Boolean,
-    onExport: () -> Unit,
     onCheckUpdate: () -> Unit,
     onEditApiKey: () -> Unit,
     onAutoTagChange: (Boolean) -> Unit,
+    writingPrompt: Boolean,
+    onWritingPromptChange: (Boolean) -> Unit,
+    mcpEnabled: Boolean,
+    onMcpChange: (Boolean) -> Unit,
+    mcpCommand: String?,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -139,12 +145,6 @@ fun ProfileScreen(
                 .border(1.dp, MoodiaryColors.Border, CardShape),
         ) {
             SettingRow(
-                iconRes = R.drawable.ic_download,
-                title = stringResource(R.string.profile_export),
-                onClick = onExport,
-            )
-            RowDivider()
-            SettingRow(
                 iconRes = R.drawable.ic_clock,
                 title = stringResource(R.string.profile_reminder),
                 detail = stringResource(R.string.profile_reminder_value),
@@ -169,6 +169,38 @@ fun ProfileScreen(
                 checked = autoTag,
                 onCheckedChange = onAutoTagChange,
             )
+            RowDivider()
+            ToggleRow(
+                iconRes = R.drawable.ic_sparkles,
+                title = stringResource(R.string.profile_writing_prompt),
+                checked = writingPrompt,
+                onCheckedChange = onWritingPromptChange,
+            )
+            RowDivider()
+            ToggleRow(
+                iconRes = R.drawable.ic_claude_mark,
+                title = stringResource(R.string.profile_mcp),
+                checked = mcpEnabled,
+                onCheckedChange = onMcpChange,
+            )
+            if (mcpEnabled) {
+                RowDivider()
+                // The one line the laptop needs; nobody types a token off a phone screen.
+                val clipboard = LocalClipboardManager.current
+                var copied by remember(mcpCommand) { mutableStateOf(false) }
+                SettingRow(
+                    iconRes = R.drawable.ic_copy,
+                    title = stringResource(if (copied) R.string.profile_mcp_copied else R.string.profile_mcp_copy),
+                    detail = mcpCommand?.substringAfter("http://")?.substringBefore("/")
+                        ?: stringResource(R.string.profile_mcp_no_network),
+                    onClick = mcpCommand?.let { command ->
+                        {
+                            clipboard.setText(AnnotatedString(command))
+                            copied = true
+                        }
+                    },
+                )
+            }
             RowDivider()
             SettingRow(
                 iconRes = R.drawable.ic_update,

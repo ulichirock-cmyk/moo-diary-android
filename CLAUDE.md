@@ -39,7 +39,7 @@ AGP 8.7.2 / Kotlin 2.0.21 / Compose BOM 2024.10.01 / Room 2.6.1（KSP），minSd
 ## 结构
 
 ```
-data/          日记模型、Room 仓库、照片落盘、统计、Markdown 导出、DeepSeek 客户端 / 回顾生成 / 问答助手
+data/          日记模型、Room 仓库、照片落盘、统计、DeepSeek 客户端 / 回顾生成 / 问答助手 / 标签与写作引导、MCP server
 ui/theme/      Color.kt 和 Type.kt 是设计 token 的落点
 ui/components/ 卡片、胶囊、照片块、底部栏
 ui/screens/    十二屏，文件名对应设计稿编号（07/08/09 同在 DetailScreen.kt）；ReviewScreen 是洞察的子页
@@ -68,6 +68,14 @@ ui/nav/        MoodiaryApp.kt —— 四个 tab + 一个浮层back stack（最�
   对话只读、进程内保留、不落库（`data/DiaryAssistant.kt`）
 - 「我的」有「自动标签」开关（默认开）：发布后用 DeepSeek 按正文补标签，优先从已有标签库选，
   只增不删，每篇最多 4 个（`data/TagSuggester.kt`）
+- 「我的」有「写作引导」开关（默认开）：新日记正文的占位文字不再是「今天发生了什么?」，而是 DeepSeek
+  按最近几篇的日期/标签/地点（不发正文）写的一句问题，每天一句、存在 prefs 里；没 Key 或请求失败时用
+  内置问题顶上。编辑旧日记时不用（`data/WritingPromptSuggester.kt`）
+- 「导出 Markdown」（我的页那行和更多操作里的那项）已删掉，改成「我的」里的「Claude Code 连接」开关：
+  开着时手机自己当 MCP server（Streamable HTTP，`/mcp`，端口 8765，Bearer token），Claude Code 用
+  `claude mcp add --transport http …` 直连，工具就是问问日记那套 search / get 再加一个 overview
+  （`data/DiaryTools.kt` 是两边共用的实现，`data/DiaryMcpServer.kt` 手写 HTTP 不引库，
+  `DiaryMcpService` 是 specialUse 前台服务）。局域网明文，默认关，用完关
 - 编辑器开空白而不是预填草稿；草稿存在 ViewModel 里
 - 统计数字实算，不用设计稿里的 216 / 12 / 483
 - "Face ID" 改成"生物识别"

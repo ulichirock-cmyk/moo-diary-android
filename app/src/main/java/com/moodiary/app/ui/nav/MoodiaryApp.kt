@@ -1,6 +1,10 @@
 package com.moodiary.app.ui.nav
 
+import android.Manifest
+import android.os.Build
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -24,7 +28,6 @@ import com.moodiary.app.data.DiaryViewModel
 import com.moodiary.app.data.ReviewPeriod
 import com.moodiary.app.data.newerThan
 import com.moodiary.app.data.olderThan
-import com.moodiary.app.data.toMarkdown
 import com.moodiary.app.ui.components.MoodiaryBottomBar
 import com.moodiary.app.ui.components.Tab
 import com.moodiary.app.ui.screens.CalendarScreen
@@ -42,7 +45,6 @@ import com.moodiary.app.ui.screens.TimelineScreen
 import com.moodiary.app.ui.screens.UpdateScreen
 import com.moodiary.app.ui.theme.MoodiaryColors
 import com.moodiary.app.util.appVersionName
-import com.moodiary.app.util.shareMarkdown
 
 /**
  * Screens that cover the tabs completely. They form a back stack because the editor
@@ -76,6 +78,11 @@ fun MoodiaryApp(vm: DiaryViewModel = viewModel()) {
     var sheetOpen by remember { mutableStateOf(false) }
     var confirmingDelete by remember { mutableStateOf(false) }
     var editingApiKey by remember { mutableStateOf(false) }
+    // Android 13+ shows the listener's notification only with this permission; the
+    // listener itself runs either way, so a refusal is not an error.
+    val notificationPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { }
 
     LaunchedEffect(Unit) { vm.checkForUpdate(version) }
 
@@ -113,10 +120,19 @@ fun MoodiaryApp(vm: DiaryViewModel = viewModel()) {
                     updateVersion = vm.availableUpdate?.version,
                     hasApiKey = vm.hasApiKey,
                     autoTag = vm.autoTagEnabled,
-                    onExport = { context.shareMarkdown(entries.toMarkdown()) },
                     onCheckUpdate = { push(Overlay.Update) },
                     onEditApiKey = { editingApiKey = true },
                     onAutoTagChange = vm::setAutoTag,
+                    writingPrompt = vm.writingPromptEnabled,
+                    onWritingPromptChange = vm::setWritingPrompt,
+                    mcpEnabled = vm.mcpEnabled,
+                    onMcpChange = { enabled ->
+                        if (enabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                        vm.setMcp(enabled)
+                    },
+                    mcpCommand = vm.mcpCommand(),
                 )
             }
         }
@@ -259,13 +275,6 @@ fun MoodiaryApp(vm: DiaryViewModel = viewModel()) {
                                     sheetOpen = false
                                     vm.startEditing(entry)
                                     push(Overlay.Editor)
-                                },
-                                onExport = {
-                                    sheetOpen = false
-                                    context.shareMarkdown(
-                                        markdown = entry.toMarkdown(),
-                                        fileName = "moodiary-${entry.date}.md",
-                                    )
                                 },
                                 onAskDelete = {
                                     sheetOpen = false

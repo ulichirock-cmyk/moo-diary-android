@@ -5,6 +5,13 @@
          system photo picker and need no storage permission. -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Claude Code 连接: the diary answers MCP calls over the local network while the
+         switch on 我的 is on. A foreground service keeps the socket open; its
+         notification is the reminder that the diary is reachable. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <!-- 地图选点 opens on the device position when it can. Both are optional: the
          screen falls back to a default centre and stays fully usable. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -29,6 +36,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <service
+            android:name=".data.DiaryMcpService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Serves the user's own diary to their laptop over the local network (MCP) while they keep the switch on." />
+        </service>
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

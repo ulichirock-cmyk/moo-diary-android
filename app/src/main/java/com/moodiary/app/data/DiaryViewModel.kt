@@ -9,7 +9,9 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.YearMonth
@@ -31,6 +33,7 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
     private val insightGenerator: InsightGenerator = DeepSeekInsightGenerator { aiSettings.apiKey }
     private val assistant = DiaryAssistant { aiSettings.apiKey }
     private val tagSuggester = TagSuggester { aiSettings.apiKey }
+    private val promptSuggester = WritingPromptSuggester { aiSettings.apiKey }
 
     val entries get() = repository.entries
 
@@ -88,6 +91,51 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
     /** Opens the editor on a blank draft. */
     fun startNewEntry() {
         clearDraft()
+        refreshWritingPrompt()
+    }
+
+    // ── 写作引导 ────────────────────────────────────────────────────────────
+    /** Today's question, once fetched. */
+    var writingPrompt by mutableStateOf<String?>(null)
+        private set
+    private var writingPromptJob: Job? = null
+    private var writingPromptIsFallback = false
+
+    /** What the editor's placeholder says on a new entry; null falls back to the design's copy. */
+    val writingPromptHint: String?
+        get() = writingPrompt?.takeIf { writingPromptEnabled && editingId == null }
+
+    /**
+     * One question per day. Cached in preferences so reopening the editor costs no
+     * request; the fetch runs at start-up so it is usually ready when the editor opens.
+     * Without a key, or when DeepSeek fails, a canned question stands in.
+     */
+    fun refreshWritingPrompt() {
+        if (!writingPromptEnabled) return
+        val today = LocalDate.now()
+        val cached = aiSettings.writingPromptFor(today)
+        if (cached != null) {
+            writingPrompt = cached
+            return
+        }
+        // Nothing fresh for today: show a canned line right away rather than yesterday's,
+        // and ask DeepSeek for a better one. Only a model answer is written down, so a
+        // network blip does not lock the canned line in for the day.
+        if (writingPrompt == null || writingPromptIsFallback) {
+            writingPrompt = WritingPromptSuggester.FALLBACK.random()
+            writingPromptIsFallback = true
+        }
+        if (writingPromptJob?.isActive == true) return
+        writingPromptJob = viewModelScope.launch {
+            // Room emits asynchronously; at start-up the list is still empty, and a
+            // question written for an empty diary is not worth caching for the day.
+            val loaded = withTimeoutOrNull(3_000) { entries.first { it.isNotEmpty() } } ?: entries.value
+            val recent = loaded.sortedByDescending { it.createdAt }.take(5)
+            val text = promptSuggester.suggest(recent, today, aiSettings.recentWritingPrompts()) ?: return@launch
+            aiSettings.saveWritingPrompt(today, text)
+            writingPrompt = text
+            writingPromptIsFallback = false
+        }
     }
 
     /**
@@ -377,12 +425,43 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
         autoTagEnabled = enabled
     }
 
+    var writingPromptEnabled by mutableStateOf(aiSettings.writingPrompt)
+        private set
+
+    fun setWritingPrompt(enabled: Boolean) {
+        aiSettings.writingPrompt = enabled
+        writingPromptEnabled = enabled
+        if (enabled) refreshWritingPrompt()
+    }
+
+    // ── Claude Code 连接 ─────────────────────────────────────────────────────
+    var mcpEnabled by mutableStateOf(aiSettings.mcpEnabled)
+        private set
+    private val mcpToken: String get() = aiSettings.mcpToken
+
+    /** Turns the listener on or off; the flag survives restarts and [init] re-applies it. */
+    fun setMcp(enabled: Boolean) {
+        aiSettings.mcpEnabled = enabled
+        mcpEnabled = enabled
+        val app = getApplication<Application>()
+        if (enabled) DiaryMcpService.start(app) else DiaryMcpService.stop(app)
+    }
+
+    /** `host:port` on the local network, or null when the phone is not on Wi-Fi. */
+    fun mcpAddress(): String? = DiaryMcpServer.localAddress()?.let { "$it:${DiaryMcpServer.DEFAULT_PORT}" }
+
+    /** The one line the user runs on the laptop. */
+    fun mcpCommand(): String? = mcpAddress()?.let { address ->
+        "claude mcp add --transport http moodiary http://$address/mcp --header \"Authorization: Bearer $mcpToken\""
+    }
+
     fun saveApiKey(key: String) {
         aiSettings.apiKey = key.takeIf { it.isNotBlank() }
         hasApiKey = aiSettings.apiKey != null
         // The key changed, so whatever the cards show (NoKey, an auth error) is stale.
         insightSources.clear()
         insights.clear()
+        refreshWritingPrompt()
     }
 
     // ── Calendar ─────────────────────────────────────────────────────────────
@@ -418,5 +497,12 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
 
     private companion object {
         const val MAX_TAGS_PER_ENTRY = 4
+    }
+
+    init {
+        // Last, so every property above is initialised: fetch today's 写作引导 early.
+        refreshWritingPrompt()
+        // The app is on screen when a view model is made, so a foreground start is allowed.
+        if (mcpEnabled) DiaryMcpService.start(getApplication())
     }
 }

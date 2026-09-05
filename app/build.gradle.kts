@@ -8,12 +8,14 @@ plugins {
 }
 
 // Developer default for the DeepSeek key: `DEEPSEEK_API_KEY=sk-...` in local.properties
-// (gitignored). The user can always override it from 我的 → AI 洞察.
+// (gitignored), or the environment variable of the same name for a one-off build.
+// The user can always override it from 我的 → AI 洞察.
 val deepSeekApiKey: String = rootProject.file("local.properties")
     .takeIf { it.exists() }
     ?.let { file -> Properties().apply { file.inputStream().use(::load) } }
     ?.getProperty("DEEPSEEK_API_KEY")
-    .orEmpty()
+    ?.takeIf { it.isNotBlank() }
+    ?: System.getenv("DEEPSEEK_API_KEY").orEmpty()
 
 android {
     namespace = "com.moodiary.app"

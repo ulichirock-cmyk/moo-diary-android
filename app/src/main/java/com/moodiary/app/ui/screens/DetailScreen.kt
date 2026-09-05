@@ -56,7 +56,6 @@ fun DetailScreen(
     onOpenSheet: () -> Unit,
     onDismissSheet: () -> Unit,
     onEdit: () -> Unit,
-    onExport: () -> Unit,
     onAskDelete: () -> Unit,
     onDismissDelete: () -> Unit,
     onConfirmDelete: () -> Unit,
@@ -133,7 +132,6 @@ fun DetailScreen(
             MoreActionsSheet(
                 onDismiss = onDismissSheet,
                 onEdit = onEdit,
-                onExport = onExport,
                 onDelete = onAskDelete,
             )
         }
@@ -247,7 +245,6 @@ private fun NeighbourRow(
 private fun MoreActionsSheet(
     onDismiss: () -> Unit,
     onEdit: () -> Unit,
-    onExport: () -> Unit,
     onDelete: () -> Unit,
 ) {
     Scrim(onDismiss)
@@ -260,8 +257,6 @@ private fun MoreActionsSheet(
     ) {
         SheetCard {
             SheetRow(R.drawable.ic_edit, stringResource(R.string.more_edit), onClick = onEdit)
-            SheetDivider()
-            SheetRow(R.drawable.ic_download, stringResource(R.string.more_export), onClick = onExport)
             SheetDivider()
             SheetRow(
                 iconRes = R.drawable.ic_trash,

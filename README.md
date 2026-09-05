@@ -4,8 +4,7 @@ Kotlin + Jetpack Compose implementation of **《Moodiary 设计稿》**
 (Claude Design project `b270202f-0b14-42df-9cae-e15fa11b1aea`).
 
 A private photo-and-text diary: no follows, no likes, no comments. Six screens,
-one warm-paper palette, and a Markdown export that is the same shape Claude reads
-over MCP.
+one warm-paper palette.
 
 ## Screens
 
@@ -16,9 +15,9 @@ over MCP.
 | 03 | 日历 — month grid marking days with entries | `ui/screens/CalendarScreen.kt` |
 | 04 | 搜索 — full text + tags | `ui/screens/SearchScreen.kt` |
 | 05 | 洞察 — Claude's weekly review | `ui/screens/InsightsScreen.kt` |
-| 06 | 我的 — stats, export, reminder, lock, update | `ui/screens/ProfileScreen.kt` |
+| 06 | 我的 — stats, reminder, lock, AI settings, update | `ui/screens/ProfileScreen.kt` |
 | 07 | 日记详情 — one entry in full | `ui/screens/DetailScreen.kt` |
-| 08 | 更多操作 — edit / export / delete sheet | `ui/screens/DetailScreen.kt` |
+| 08 | 更多操作 — edit / delete sheet | `ui/screens/DetailScreen.kt` |
 | 09 | 删除确认 | `ui/screens/DetailScreen.kt` |
 | 10 | 地点选择 — nearby, frequent, custom | `ui/screens/PlacePickerScreen.kt` |
 | 11 | 地图选点 | `ui/screens/MapPickerScreen.kt` |
@@ -80,8 +79,8 @@ Picked photos are copied into `filesDir/photos/` and stored as `file://` URIs �
 the photo picker's `content://` grants do not survive a restart.
 `InMemoryDiaryRepository` remains for previews and tests.
 
-`DiaryRepository` is an interface for exactly this reason — swapping in Room (or
-a Markdown-file-backed store) touches one class and nothing else.
+`DiaryRepository` is an interface for exactly this reason — swapping in Room
+touched one class and nothing else.
 
 ## Deliberate departures from the static design
 
@@ -103,6 +102,24 @@ a Markdown-file-backed store) touches one class and nothing else.
 - **自动标签.** A toggle on 我的 (on by default). After publish, DeepSeek picks
   tags for the entry from the diary's existing vocabulary and adds them to the
   user's own — never removes, at most four per entry (`data/TagSuggester.kt`).
+- **No Markdown export; MCP instead.** The design's 导出 Markdown row on 我的 and
+  导出为 Markdown on 更多操作 are gone. In their place 我的 has a Claude Code 连接
+  switch: while it is on, the phone itself is an MCP server (Streamable HTTP on
+  port 8765, bearer token) and a 复制连接命令 row hands over the one line to run:
+
+  ```
+  claude mcp add --transport http moodiary http://<phone-ip>:8765/mcp --header "Authorization: Bearer <token>"
+  ```
+
+  Claude Code then gets the same search / get tools as 问问日记 plus an overview
+  (`data/DiaryTools.kt` is shared; `data/DiaryMcpServer.kt` is a hand-rolled HTTP
+  listener, no library; `DiaryMcpService` keeps it alive as a `specialUse`
+  foreground service). Plain HTTP on the local Wi-Fi, off by default.
+- **写作引导.** A toggle on 我的 (on by default). On a new entry the body's
+  placeholder is a question for today instead of 今天发生了什么?, written by DeepSeek
+  from the last few entries' dates, tags and places (never the text), one per day
+  and cached in preferences; a built-in list stands in without a key. Editing an
+  existing entry keeps the design's placeholder (`data/WritingPromptSuggester.kt`).
 - **AI 洞察 has a settings row.** The review paragraphs on screen 05 are written by
   DeepSeek (`deepseek-v4-flash`), which needs an API key from somewhere. The design
   has no place for one, so 我的 → 数据 gains an "AI 洞察" row that opens a key dialog.

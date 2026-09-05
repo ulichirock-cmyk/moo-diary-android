@@ -7,8 +7,7 @@ import java.time.LocalDateTime
 
 /**
  * Everything the UI reads and writes goes through here. Keeping it an interface means
- * swapping the in-memory store for Room (or a file-backed Markdown store, which is
- * what "导出 Markdown" implies) touches exactly one class.
+ * swapping the in-memory store for Room touches exactly one class.
  */
 interface DiaryRepository {
     val entries: StateFlow<List<DiaryEntry>>

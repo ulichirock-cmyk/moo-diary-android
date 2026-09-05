@@ -25,7 +25,7 @@ object StubUpdateChecker : UpdateChecker {
         downloadSize = "18.4 MB",
         notes = listOf(
             "日记可以记录地点了，支持地图选点",
-            "导出 Markdown 时一并打包照片",
+            "洞察页可以直接向日记提问",
             "修复日历偶尔漏显标记的问题",
         ),
     )

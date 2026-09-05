@@ -72,7 +72,6 @@
     <string name="profile_streak">连续天数</string>
     <string name="profile_photos">张照片</string>
     <string name="profile_section_data">数据</string>
-    <string name="profile_export">导出 Markdown</string>
     <string name="profile_reminder">每日提醒</string>
     <string name="profile_reminder_value">22:00</string>
     <string name="profile_lock">应用锁</string>
@@ -81,6 +80,14 @@
     <string name="profile_ai">AI 洞察</string>
     <string name="profile_ai_configured">DeepSeek</string>
     <string name="profile_auto_tag">自动标签</string>
+    <string name="profile_writing_prompt">写作引导</string>
+    <string name="profile_mcp">Claude Code 连接</string>
+    <string name="profile_mcp_no_network">手机没有连上 Wi-Fi</string>
+    <string name="profile_mcp_copy">复制连接命令</string>
+    <string name="profile_mcp_copied">已复制</string>
+    <string name="mcp_channel">Claude Code 连接</string>
+    <string name="mcp_notification_title">日记正在向 Claude Code 开放</string>
+    <string name="mcp_no_network">没有连上 Wi-Fi</string>
     <string name="profile_ai_unset">未配置</string>
     <string name="profile_ai_dialog_title">DeepSeek API Key</string>
     <string name="profile_ai_dialog_body">每周回顾由 deepseek-v4-flash 生成。Key 只保存在这台设备上,日记正文会随请求发给 DeepSeek。</string>
@@ -98,7 +105,6 @@
 
     <!-- 08 更多操作 -->
     <string name="more_edit">编辑这篇日记</string>
-    <string name="more_export">导出为 Markdown</string>
     <string name="more_delete">删除这篇日记</string>
 
     <!-- 09 删除确认 -->

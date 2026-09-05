@@ -125,8 +125,10 @@ fun EditorScreen(
                 decorationBox = { inner ->
                     Box {
                         if (vm.draftText.isEmpty()) {
+                            // 写作引导: today's question stands in for the placeholder on a
+                            // new entry, so the hint is the prompt and nothing else is added.
                             Text(
-                                stringResource(R.string.editor_placeholder),
+                                vm.writingPromptHint ?: stringResource(R.string.editor_placeholder),
                                 style = MoodiaryType.BodyEditor,
                                 color = MoodiaryColors.TextMuted,
                             )
