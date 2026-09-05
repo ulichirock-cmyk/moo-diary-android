@@ -42,7 +42,7 @@ AGP 8.7.2 / Kotlin 2.0.21 / Compose BOM 2024.10.01 / Room 2.6.1（KSP），minSd
 data/          日记模型、Room 仓库、照片落盘、统计、Markdown 导出、DeepSeek 洞察生成与缓存
 ui/theme/      Color.kt 和 Type.kt 是设计 token 的落点
 ui/components/ 卡片、胶囊、照片块、底部栏
-ui/screens/    十二屏，文件名对应设计稿编号（07/08/09 同在 DetailScreen.kt）
+ui/screens/    十二屏，文件名对应设计稿编号（07/08/09 同在 DetailScreen.kt）；ReviewScreen 是洞察的子页
 ui/map/        自绘的 OSM 瓦片地图：投影、相机、瓦片缓存
 ui/nav/        MoodiaryApp.kt —— 四个 tab + 一个浮层back stack（最深三层：编辑→地点→地图）
 ```
@@ -62,7 +62,7 @@ ui/nav/        MoodiaryApp.kt —— 四个 tab + 一个浮层back stack（最�
 - 时间线头部加了搜索图标（设计稿没给搜索入口，不加的话第 4 屏进不去）
 - 日历加了翻月按钮，默认当前月
 - 「我的」多了一行「AI 洞察」用来填 DeepSeek Key（洞察页的回顾是 AI 生成的，Key 总得有地方填）
-- 洞察页除了设计稿的「每周回顾」，还复用同一张卡加了「每月回顾」「年度回顾」（`data/ReviewPeriod.kt`）
+- 洞察页改成索引：三行「每周 / 每月 / 年度回顾」，点进 `ReviewScreen` 才看设计稿那张回顾卡、才调 DeepSeek（`data/ReviewPeriod.kt`）
 - 编辑器开空白而不是预填草稿；草稿存在 ViewModel 里
 - 统计数字实算，不用设计稿里的 216 / 12 / 483
 - "Face ID" 改成"生物识别"

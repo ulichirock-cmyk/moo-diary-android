@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.moodiary.app.data.DiaryViewModel
+import com.moodiary.app.data.ReviewPeriod
 import com.moodiary.app.data.newerThan
 import com.moodiary.app.data.olderThan
 import com.moodiary.app.data.toMarkdown
@@ -34,6 +35,7 @@ import com.moodiary.app.ui.screens.MapPickerScreen
 import com.moodiary.app.ui.screens.PlacePickerScreen
 import com.moodiary.app.ui.screens.ApiKeyDialog
 import com.moodiary.app.ui.screens.ProfileScreen
+import com.moodiary.app.ui.screens.ReviewScreen
 import com.moodiary.app.ui.screens.SearchScreen
 import com.moodiary.app.ui.screens.TimelineScreen
 import com.moodiary.app.ui.screens.UpdateScreen
@@ -52,6 +54,7 @@ private sealed interface Overlay {
     data object PlacePicker : Overlay
     data object MapPicker : Overlay
     data object Update : Overlay
+    data class Review(val period: ReviewPeriod) : Overlay
     data class Detail(val entryId: String) : Overlay
 }
 
@@ -97,10 +100,8 @@ fun MoodiaryApp(vm: DiaryViewModel = viewModel()) {
                     onOpenEntry = { push(Overlay.Detail(it.id)) },
                 )
                 Tab.INSIGHTS -> InsightsScreen(
-                    entries = entries,
                     insights = vm.insights,
-                    onRefreshAll = { vm.refreshInsights() },
-                    onRegenerate = { vm.refreshInsight(it, force = true) },
+                    onOpen = { push(Overlay.Review(it)) },
                     modifier = Modifier.statusBarsPadding(),
                 )
                 Tab.PROFILE -> ProfileScreen(
@@ -207,6 +208,13 @@ fun MoodiaryApp(vm: DiaryViewModel = viewModel()) {
                         },
                     )
 
+                    is Overlay.Review -> ReviewScreen(
+                        modifier = Modifier.statusBarsPadding(),
+                        period = top.period,
+                        insight = vm.insights[top.period] ?: DiaryViewModel.InsightState.Idle,
+                        onRefresh = { force -> vm.refreshInsight(top.period, force) },
+                        onBack = { pop() },
+                    )
                     Overlay.Update -> UpdateScreen(
                         modifier = Modifier.statusBarsPadding(),
                         currentVersion = version,
