@@ -47,8 +47,16 @@
     <!-- Insights -->
     <string name="insights_title">洞察</string>
     <string name="insights_weekly_review">每周回顾</string>
-    <string name="insights_weekly_body">这一周你写下 %1$d 篇日记、%2$d 张照片,平均每篇 %3$d 字。周末的两篇写得最长,周一的加班日最短。「阅读」已连续三周出现在你的夜晚,或许值得给它一个固定的时段。</string>
-    <string name="insights_weekly_footnote">基于 %1$d 篇日记 · 每周一 8:00 自动生成</string>
+    <string name="insights_monthly_review">每月回顾</string>
+    <string name="insights_yearly_review">年度回顾</string>
+    <string name="insights_loading">正在读%1$s的日记…</string>
+    <string name="insights_empty">%1$s还没有日记。写下第一篇,回顾就会出现在这里。</string>
+    <string name="insights_no_key">还没有配置 AI。去「我的 → AI 洞察」填入 DeepSeek API Key,回顾就会自动生成。</string>
+    <string name="insights_span_week">这一周</string>
+    <string name="insights_span_month">这个月</string>
+    <string name="insights_span_year">今年</string>
+    <string name="insights_error">这次没生成出来:%1$s</string>
+    <string name="insights_regenerate">重新生成</string>
 
     <!-- Profile -->
     <string name="profile_entries">篇日记</string>
@@ -61,6 +69,14 @@
     <string name="profile_lock">应用锁</string>
     <string name="profile_lock_value">生物识别</string>
     <string name="profile_check_update">检查更新</string>
+    <string name="profile_ai">AI 洞察</string>
+    <string name="profile_ai_configured">DeepSeek</string>
+    <string name="profile_ai_unset">未配置</string>
+    <string name="profile_ai_dialog_title">DeepSeek API Key</string>
+    <string name="profile_ai_dialog_body">每周回顾由 deepseek-v4-flash 生成。Key 只保存在这台设备上,日记正文会随请求发给 DeepSeek。</string>
+    <string name="profile_ai_hint">sk-…</string>
+    <string name="profile_ai_save">保存</string>
+    <string name="profile_ai_cancel">取消</string>
     <string name="profile_update_available">%1$s 可用</string>
     <string name="profile_update_none">已是最新</string>
 

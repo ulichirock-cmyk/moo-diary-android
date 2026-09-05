@@ -3,6 +3,7 @@ package com.moodiary.app.data
 import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
@@ -24,6 +25,8 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
     // Reverse geocoding is a platform service, so it needs the application context.
     private val placeSource: PlaceSource = GeocoderPlaceSource(application)
     private val updateChecker: UpdateChecker = StubUpdateChecker
+    private val aiSettings = AiSettings(application)
+    private val insightGenerator: InsightGenerator = DeepSeekInsightGenerator { aiSettings.apiKey }
 
     val entries get() = repository.entries
 
@@ -204,6 +207,77 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
 
     fun checkForUpdate(currentVersion: String) {
         viewModelScope.launch { availableUpdate = updateChecker.check(currentVersion) }
+    }
+
+    // ── Insights ─────────────────────────────────────────────────────────────
+    /** What one review card on 05 洞察 shows. */
+    sealed interface InsightState {
+        data object Idle : InsightState
+        data object Loading : InsightState
+        data object NoKey : InsightState
+        data object NoEntries : InsightState
+        data class Ready(val text: String) : InsightState
+        data class Error(val message: String) : InsightState
+    }
+
+    /** One state per card; missing keys read as [InsightState.Idle]. */
+    val insights = mutableStateMapOf<ReviewPeriod, InsightState>()
+
+    /** Fingerprint of the entries each card's current text was generated from. */
+    private val insightSources = HashMap<ReviewPeriod, List<String>>()
+    private val insightJobs = HashMap<ReviewPeriod, Job>()
+
+    fun refreshInsights(force: Boolean = false) {
+        ReviewPeriod.entries.forEach { refreshInsight(it, force) }
+    }
+
+    /**
+     * Generates the review for [period]. Cheap to call on every visit to the tab: it
+     * re-runs only when that span's entries changed or [force] is set, so flipping tabs
+     * does not burn tokens.
+     */
+    fun refreshInsight(period: ReviewPeriod, force: Boolean = false) {
+        val range = period.range()
+        val span = entries.value.filter { it.date in range }
+        val fingerprint = span.map { "${it.id}:${it.text.hashCode()}:${it.tags}:${it.place}:${it.photos.size}" }
+        val current = insights[period] ?: InsightState.Idle
+
+        val stale = fingerprint != insightSources[period]
+        val settled = current is InsightState.Ready || current is InsightState.NoEntries
+        if (!force && !stale && (settled || current is InsightState.Loading)) return
+        // A missing key is not a reason to keep retrying on every visit either.
+        if (!force && !stale && current is InsightState.NoKey && aiSettings.apiKey == null) return
+
+        insightJobs[period]?.cancel()
+        insightSources[period] = fingerprint
+        if (span.isEmpty()) {
+            insights[period] = InsightState.NoEntries
+            return
+        }
+        insights[period] = InsightState.Loading
+        insightJobs[period] = viewModelScope.launch {
+            insights[period] = try {
+                InsightState.Ready(insightGenerator.review(period, span, range))
+            } catch (e: InsightException) {
+                when (e.message) {
+                    DeepSeekInsightGenerator.NO_KEY -> InsightState.NoKey
+                    DeepSeekInsightGenerator.NO_ENTRIES -> InsightState.NoEntries
+                    else -> InsightState.Error(e.message ?: "未知错误")
+                }
+            }
+        }
+    }
+
+    // ── AI settings ──────────────────────────────────────────────────────────
+    var hasApiKey by mutableStateOf(aiSettings.apiKey != null)
+        private set
+
+    fun saveApiKey(key: String) {
+        aiSettings.apiKey = key.takeIf { it.isNotBlank() }
+        hasApiKey = aiSettings.apiKey != null
+        // The key changed, so whatever the cards show (NoKey, an auth error) is stale.
+        insightSources.clear()
+        insights.clear()
     }
 
     // ── Calendar ─────────────────────────────────────────────────────────────

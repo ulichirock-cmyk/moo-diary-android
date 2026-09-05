@@ -32,6 +32,7 @@ import com.moodiary.app.ui.screens.EditorScreen
 import com.moodiary.app.ui.screens.InsightsScreen
 import com.moodiary.app.ui.screens.MapPickerScreen
 import com.moodiary.app.ui.screens.PlacePickerScreen
+import com.moodiary.app.ui.screens.ApiKeyDialog
 import com.moodiary.app.ui.screens.ProfileScreen
 import com.moodiary.app.ui.screens.SearchScreen
 import com.moodiary.app.ui.screens.TimelineScreen
@@ -69,6 +70,7 @@ fun MoodiaryApp(vm: DiaryViewModel = viewModel()) {
     val stack = remember { mutableStateListOf<Overlay>() }
     var sheetOpen by remember { mutableStateOf(false) }
     var confirmingDelete by remember { mutableStateOf(false) }
+    var editingApiKey by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) { vm.checkForUpdate(version) }
 
@@ -96,14 +98,19 @@ fun MoodiaryApp(vm: DiaryViewModel = viewModel()) {
                 )
                 Tab.INSIGHTS -> InsightsScreen(
                     entries = entries,
+                    insights = vm.insights,
+                    onRefreshAll = { vm.refreshInsights() },
+                    onRegenerate = { vm.refreshInsight(it, force = true) },
                     modifier = Modifier.statusBarsPadding(),
                 )
                 Tab.PROFILE -> ProfileScreen(
                     modifier = Modifier.statusBarsPadding(),
                     entries = entries,
                     updateVersion = vm.availableUpdate?.version,
+                    hasApiKey = vm.hasApiKey,
                     onExport = { context.shareMarkdown(entries.toMarkdown()) },
                     onCheckUpdate = { push(Overlay.Update) },
+                    onEditApiKey = { editingApiKey = true },
                 )
             }
         }
@@ -117,6 +124,13 @@ fun MoodiaryApp(vm: DiaryViewModel = viewModel()) {
             },
             modifier = Modifier.align(Alignment.BottomCenter),
         )
+
+        if (editingApiKey) {
+            ApiKeyDialog(
+                onSave = { vm.saveApiKey(it); editingApiKey = false },
+                onDismiss = { editingApiKey = false },
+            )
+        }
 
         val top = stack.lastOrNull()
         AnimatedVisibility(

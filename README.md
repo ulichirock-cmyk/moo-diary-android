@@ -90,6 +90,13 @@ a Markdown-file-backed store) touches one class and nothing else.
   timeline header carries a search icon.
 - **Calendar can move.** The design shows one fixed month; the app adds ‹ ›
   stepping and defaults to the current month.
+- **Insights has three cards.** The design draws one 每周回顾 card; the app repeats
+  the same card for the month and the year so far (`data/ReviewPeriod.kt`).
+- **AI 洞察 has a settings row.** The review paragraphs on screen 05 are written by
+  DeepSeek (`deepseek-v4-flash`), which needs an API key from somewhere. The design
+  has no place for one, so 我的 → 数据 gains an "AI 洞察" row that opens a key dialog.
+  Developers can skip the dialog by putting `DEEPSEEK_API_KEY=sk-...` in
+  `local.properties`.
 - **The editor opens empty.** The design shows a draft mid-composition; a real
   editor starts blank. The draft is held in the view model, so leaving and coming
   back restores it — which is what "草稿已自动保存" promises.
