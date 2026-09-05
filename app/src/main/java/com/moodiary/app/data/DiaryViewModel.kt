@@ -29,6 +29,7 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
     private val aiSettings = AiSettings(application)
     private val insightCache = InsightCache(application)
     private val insightGenerator: InsightGenerator = DeepSeekInsightGenerator { aiSettings.apiKey }
+    private val assistant = DiaryAssistant { aiSettings.apiKey }
 
     val entries get() = repository.entries
 
@@ -304,6 +305,45 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
         }
+    }
+
+    // ── 问问日记 ────────────────────────────────────────────────────────────
+    /** The conversation, oldest first. Lives with the process; nothing is written down. */
+    val chatMessages = mutableStateListOf<ChatMessage>()
+
+    var chatInput by mutableStateOf("")
+        private set
+    var chatBusy by mutableStateOf(false)
+        private set
+
+    fun onChatInputChange(value: String) {
+        chatInput = value
+    }
+
+    fun sendChat(question: String = chatInput) {
+        val q = question.trim()
+        if (q.isEmpty() || chatBusy) return
+        chatInput = ""
+        val history = chatMessages.filterNot { it.isError }
+        chatMessages += ChatMessage(fromUser = true, text = q)
+        chatBusy = true
+        viewModelScope.launch {
+            chatMessages += try {
+                assistant.ask(history, q, entries.value)
+            } catch (e: InsightException) {
+                val text = if (e.message == DiaryAssistant.NO_KEY) {
+                    "还没有配置 AI。去「我的 → AI 洞察」填入 DeepSeek API Key 再来问。"
+                } else {
+                    e.message ?: "未知错误"
+                }
+                ChatMessage(fromUser = false, text = text, isError = true)
+            }
+            chatBusy = false
+        }
+    }
+
+    fun clearChat() {
+        chatMessages.clear()
     }
 
     // ── AI settings ──────────────────────────────────────────────────────────

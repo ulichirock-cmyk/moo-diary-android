@@ -35,6 +35,7 @@ import com.moodiary.app.data.ReviewPeriod
 import com.moodiary.app.ui.Fmt
 import com.moodiary.app.ui.components.CardShape
 import com.moodiary.app.ui.components.MoodiaryCard
+import com.moodiary.app.ui.components.PillShape
 import com.moodiary.app.ui.components.bottomBarContentPadding
 import com.moodiary.app.ui.theme.MoodiaryColors
 import com.moodiary.app.ui.theme.MoodiaryType
@@ -53,6 +54,7 @@ import com.moodiary.app.ui.theme.MoodiaryType
 fun InsightsScreen(
     insights: Map<ReviewPeriod, InsightState>,
     onOpen: (ReviewPeriod) -> Unit,
+    onAsk: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -68,9 +70,35 @@ fun InsightsScreen(
             modifier = Modifier.padding(start = 20.dp, top = 8.dp, bottom = 4.dp),
         )
 
+        // 问问日记 — looks like the search field on 04 搜索, opens ChatScreen.
+        Row(
+            modifier = Modifier
+                .padding(start = 16.dp, end = 16.dp, top = 18.dp)
+                .fillMaxWidth()
+                .clip(PillShape)
+                .background(MoodiaryColors.Field)
+                .border(1.dp, MoodiaryColors.BorderStrong, PillShape)
+                .clickable(onClick = onAsk)
+                .padding(horizontal = 14.dp, vertical = 11.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                painterResource(R.drawable.ic_sparkles),
+                contentDescription = null,
+                tint = MoodiaryColors.Accent,
+                modifier = Modifier.size(15.dp),
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                stringResource(R.string.chat_entry_hint),
+                style = MoodiaryType.Label,
+                color = MoodiaryColors.TextMuted,
+            )
+        }
+
         Column(
             modifier = Modifier
-                .padding(start = 16.dp, end = 16.dp, top = 22.dp)
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp)
                 .shadow(1.dp, CardShape, spotColor = MoodiaryColors.TextPrimary)
                 .clip(CardShape)
                 .background(MoodiaryColors.Surface)

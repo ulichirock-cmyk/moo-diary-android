@@ -39,7 +39,7 @@ AGP 8.7.2 / Kotlin 2.0.21 / Compose BOM 2024.10.01 / Room 2.6.1（KSP），minSd
 ## 结构
 
 ```
-data/          日记模型、Room 仓库、照片落盘、统计、Markdown 导出、DeepSeek 洞察生成与缓存
+data/          日记模型、Room 仓库、照片落盘、统计、Markdown 导出、DeepSeek 客户端 / 回顾生成 / 问答助手
 ui/theme/      Color.kt 和 Type.kt 是设计 token 的落点
 ui/components/ 卡片、胶囊、照片块、底部栏
 ui/screens/    十二屏，文件名对应设计稿编号（07/08/09 同在 DetailScreen.kt）；ReviewScreen 是洞察的子页
@@ -63,6 +63,9 @@ ui/nav/        MoodiaryApp.kt —— 四个 tab + 一个浮层back stack（最�
 - 日历加了翻月按钮，默认当前月
 - 「我的」多了一行「AI 洞察」用来填 DeepSeek Key（洞察页的回顾是 AI 生成的，Key 总得有地方填）
 - 洞察页改成索引：三行「每周 / 每月 / 年度回顾」，点进 `ReviewScreen` 才看设计稿那张回顾卡、才调 DeepSeek（`data/ReviewPeriod.kt`）
+- 洞察页顶部有「问问日记」入口，进 `ChatScreen` 和 AI 对话找日记、问问题。模型只拿到
+  search / get 两个工具，日记内容不进提示词；回答里的 `[[id]]` 引用渲染成日期胶囊，点进详情。
+  对话只读、进程内保留、不落库（`data/DiaryAssistant.kt`）
 - 编辑器开空白而不是预填草稿；草稿存在 ViewModel 里
 - 统计数字实算，不用设计稿里的 216 / 12 / 483
 - "Face ID" 改成"生物识别"

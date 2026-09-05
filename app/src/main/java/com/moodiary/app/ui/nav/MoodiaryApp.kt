@@ -28,6 +28,7 @@ import com.moodiary.app.data.toMarkdown
 import com.moodiary.app.ui.components.MoodiaryBottomBar
 import com.moodiary.app.ui.components.Tab
 import com.moodiary.app.ui.screens.CalendarScreen
+import com.moodiary.app.ui.screens.ChatScreen
 import com.moodiary.app.ui.screens.DetailScreen
 import com.moodiary.app.ui.screens.EditorScreen
 import com.moodiary.app.ui.screens.InsightsScreen
@@ -55,6 +56,7 @@ private sealed interface Overlay {
     data object MapPicker : Overlay
     data object Update : Overlay
     data class Review(val period: ReviewPeriod) : Overlay
+    data object Chat : Overlay
     data class Detail(val entryId: String) : Overlay
 }
 
@@ -102,6 +104,7 @@ fun MoodiaryApp(vm: DiaryViewModel = viewModel()) {
                 Tab.INSIGHTS -> InsightsScreen(
                     insights = vm.insights,
                     onOpen = { push(Overlay.Review(it)) },
+                    onAsk = { push(Overlay.Chat) },
                     modifier = Modifier.statusBarsPadding(),
                 )
                 Tab.PROFILE -> ProfileScreen(
@@ -208,6 +211,18 @@ fun MoodiaryApp(vm: DiaryViewModel = viewModel()) {
                         },
                     )
 
+                    Overlay.Chat -> ChatScreen(
+                        modifier = Modifier.statusBarsPadding(),
+                        messages = vm.chatMessages,
+                        input = vm.chatInput,
+                        busy = vm.chatBusy,
+                        entries = entries,
+                        onInputChange = vm::onChatInputChange,
+                        onSend = { vm.sendChat(it) },
+                        onClear = vm::clearChat,
+                        onOpenEntry = { push(Overlay.Detail(it.id)) },
+                        onBack = { pop() },
+                    )
                     is Overlay.Review -> ReviewScreen(
                         modifier = Modifier.statusBarsPadding(),
                         period = top.period,

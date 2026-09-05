@@ -96,6 +96,10 @@ a Markdown-file-backed store) touches one class and nothing else.
 - **Insights is an index.** The design draws one 每周回顾 card; the app offers the
   week, the month and the year so far as rows, each opening the design's card on
   its own screen (`ReviewScreen`). A review is generated when it is opened.
+- **问问日记.** A read-only chat over the diary, opened from the top of 05 洞察.
+  DeepSeek gets two tools (search, fetch) instead of the diary text, and cites
+  entries with `[[id]]` markers that become tappable date chips (`ChatScreen`,
+  `data/DiaryAssistant.kt`). The conversation lives with the process only.
 - **AI 洞察 has a settings row.** The review paragraphs on screen 05 are written by
   DeepSeek (`deepseek-v4-flash`), which needs an API key from somewhere. The design
   has no place for one, so 我的 → 数据 gains an "AI 洞察" row that opens a key dialog.
