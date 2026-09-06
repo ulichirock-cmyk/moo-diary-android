@@ -15,6 +15,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import java.io.File
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.YearMonth
@@ -643,6 +644,51 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
 
     fun clearSearch() {
         searchQuery = ""
+    }
+
+    // ── 恢复出厂设置 ─────────────────────────────────────────────────────────
+    /**
+     * Everything this device holds: entries, the copied photos, the API key, every
+     * switch, the cached reviews, and the caches behind the map and the photos.
+     *
+     * The diary is left *empty* — the sample entries do not come back, which is what
+     * [RoomDiaryRepository.clear] remembers for the next launch. None of it is
+     * recoverable, so 我的 asks before calling this.
+     */
+    fun factoryReset() {
+        val app = getApplication<Application>()
+        // The token is about to be regenerated; a listener holding the old one has to go.
+        if (mcpEnabled) DiaryMcpService.stop(app)
+
+        repository.clear()
+        photoStore.clear()
+        aiSettings.clear()
+        insightCache.clear()
+        // Coil's images, the map tiles, a half-downloaded update — by name, because
+        // Room keeps its own lock file in the same directory.
+        listOf("image_cache", "map-tiles", "updates").forEach {
+            File(app.cacheDir, it).deleteRecursively()
+        }
+
+        clearDraft()
+        clearChat()
+        clearSearch()
+        insightJobs.values.forEach { it.cancel() }
+        insightJobs.clear()
+        insightSources.clear()
+        insights.clear()
+        availableUpdate = null
+        updateState = UpdateState.Idle
+        writingPrompt = null
+        writingPromptJob?.cancel()
+        visibleMonth = YearMonth.now()
+        selectedDate = LocalDate.now()
+
+        hasApiKey = aiSettings.apiKey != null
+        autoTagEnabled = aiSettings.autoTag
+        writingPromptEnabled = aiSettings.writingPrompt
+        mcpEnabled = aiSettings.mcpEnabled
+        refreshWritingPrompt()
     }
 
     private companion object {

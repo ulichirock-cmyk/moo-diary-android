@@ -16,6 +16,9 @@ interface DiaryRepository {
     fun upsert(entry: DiaryEntry)
 
     fun delete(id: String)
+
+    /** 恢复出厂设置: drops every entry and leaves the diary empty — the sample entries do not come back. */
+    fun clear()
 }
 
 /**
@@ -37,6 +40,10 @@ class InMemoryDiaryRepository(
 
     override fun delete(id: String) {
         _entries.value = _entries.value.filterNot { it.id == id }
+    }
+
+    override fun clear() {
+        _entries.value = emptyList()
     }
 
     companion object {

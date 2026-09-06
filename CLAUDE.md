@@ -121,6 +121,10 @@ ui/nav/        MoodiaryApp.kt —— 四个 tab + 一个浮层back stack（最�
 - `PlaceSource.nearby()` 还是桩：「附近」那种带距离的 POI 搜索要高德/百度的 key，
   这个工程没有。`atPin()` 不是桩，走系统 `Geocoder` 反查地名（机器上没有 geocoder
   后端时退回坐标文本）
+- 「我的」最下面单独一张卡是「恢复出厂设置」：日记、照片、AI Key、所有开关、回顾缓存、
+  地图瓦片和图片缓存一起清掉，日记本变成**空的**——示例日记不会回来。判断「要不要灌种子」
+  靠的是 prefs 里的 `seeded` 标记而不是「表是空的」，否则重置完重启示例又回来了
+  （`RoomDiaryRepository`）。它单独一张卡、红色，是为了不挨着「检查更新」被误点。设计稿没有这行
 - 版本更新是真的：`GitHubUpdateChecker` 读本仓库最新的 GitHub Release，「立即更新」
   下载那个 APK 再交给系统安装器（Android 不给第三方 App 静默安装，最后一下必须用户点）。
   流程见下面的「发布」

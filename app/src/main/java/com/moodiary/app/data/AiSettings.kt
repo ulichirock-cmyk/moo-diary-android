@@ -73,6 +73,14 @@ class AiSettings(context: Context) {
         return token
     }
 
+    /**
+     * 恢复出厂设置: key, switches, today's writing prompt and the MCP token all go.
+     * A build-time [BuildConfig.DEEPSEEK_API_KEY] survives — it is not the user's to clear.
+     */
+    fun clear() {
+        prefs.edit().clear().apply()
+    }
+
     /** True when the user set a key themselves (as opposed to the build-time default). */
     val hasUserKey: Boolean get() = !prefs.getString(KEY_API_KEY, null).isNullOrBlank()
 

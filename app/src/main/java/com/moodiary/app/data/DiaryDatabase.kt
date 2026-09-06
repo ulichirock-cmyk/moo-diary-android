@@ -109,6 +109,9 @@ interface DiaryDao {
 
     @Query("DELETE FROM entries WHERE id = :id")
     suspend fun delete(id: String)
+
+    @Query("DELETE FROM entries")
+    suspend fun deleteAll()
 }
 
 @Database(entities = [DiaryEntity::class], version = 2, exportSchema = false)

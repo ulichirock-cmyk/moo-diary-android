@@ -88,6 +88,10 @@ touched one class and nothing else.
   (`ios-frame.jsx`): fake status bar, dynamic island, home indicator. Those are
   the mockup's device, not the app — the Android build goes edge-to-edge and uses
   real system insets.
+- **A factory reset.** 我的 ends with a destructive row of its own: entries, photo
+  copies, the API key, every switch and the caches all go, and the diary is left
+  *empty* — the sample entries do not come back. Whether to seed is a `seeded` flag,
+  not an empty table, or a reset would undo itself on the next launch.
 - **Search needs a way in.** Screen 04 has no entry point in the design, so the
   timeline header carries a search icon.
 - **Calendar can move.** The design shows one fixed month; the app adds ‹ ›

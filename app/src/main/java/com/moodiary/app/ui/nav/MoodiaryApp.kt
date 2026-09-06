@@ -38,6 +38,7 @@ import com.moodiary.app.ui.screens.InsightsScreen
 import com.moodiary.app.ui.screens.MapPickerScreen
 import com.moodiary.app.ui.screens.PlacePickerScreen
 import com.moodiary.app.ui.screens.ApiKeyDialog
+import com.moodiary.app.ui.screens.FactoryResetDialog
 import com.moodiary.app.ui.screens.ProfileScreen
 import com.moodiary.app.ui.screens.ReviewScreen
 import com.moodiary.app.ui.screens.SearchScreen
@@ -78,6 +79,7 @@ fun MoodiaryApp(vm: DiaryViewModel = viewModel()) {
     var sheetOpen by remember { mutableStateOf(false) }
     var confirmingDelete by remember { mutableStateOf(false) }
     var editingApiKey by remember { mutableStateOf(false) }
+    var confirmingReset by remember { mutableStateOf(false) }
     // Android 13+ shows the listener's notification only with this permission; the
     // listener itself runs either way, so a refusal is not an error.
     val notificationPermission = rememberLauncherForActivityResult(
@@ -132,6 +134,7 @@ fun MoodiaryApp(vm: DiaryViewModel = viewModel()) {
                         }
                         vm.setMcp(enabled)
                     },
+                    onFactoryReset = { confirmingReset = true },
                     mcpCommand = vm.mcpCommand(),
                 )
             }
@@ -151,6 +154,18 @@ fun MoodiaryApp(vm: DiaryViewModel = viewModel()) {
             ApiKeyDialog(
                 onSave = { vm.saveApiKey(it); editingApiKey = false },
                 onDismiss = { editingApiKey = false },
+            )
+        }
+
+        if (confirmingReset) {
+            FactoryResetDialog(
+                entryCount = entries.size,
+                onConfirm = {
+                    confirmingReset = false
+                    closeAll()
+                    vm.factoryReset()
+                },
+                onDismiss = { confirmingReset = false },
             )
         }
 

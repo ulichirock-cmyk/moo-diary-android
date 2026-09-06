@@ -32,6 +32,11 @@ class PhotoStore(context: Context) {
         }
     }
 
+    /** 恢复出厂设置: every copied photo goes. */
+    fun clear() {
+        dir.listFiles()?.forEach { it.delete() }
+    }
+
     /** Deletes the copies behind [uris] that live in [dir]; remote and foreign URIs are left alone. */
     fun delete(uris: Collection<String>) {
         uris.forEach { uri ->

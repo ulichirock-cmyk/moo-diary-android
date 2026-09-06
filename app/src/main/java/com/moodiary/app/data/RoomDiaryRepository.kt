@@ -1,6 +1,7 @@
 package com.moodiary.app.data
 
 import android.content.Context
+import android.content.SharedPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -21,10 +22,13 @@ import kotlinx.coroutines.launch
  *
  * The first run seeds the table from [seedEntries] so the app opens with the same
  * sample diary it always did; after that the sample is just data the user can delete.
+ * "First run" is a flag, not an empty table — 恢复出厂设置 leaves the table empty on
+ * purpose, and the samples must not walk back in on the next launch.
  */
 class RoomDiaryRepository private constructor(context: Context) : DiaryRepository {
 
     private val dao = DiaryDatabase.get(context).diaryDao()
+    private val prefs: SharedPreferences = context.getSharedPreferences("diary", Context.MODE_PRIVATE)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override val entries: StateFlow<List<DiaryEntry>> = dao.observeAll()
@@ -33,7 +37,10 @@ class RoomDiaryRepository private constructor(context: Context) : DiaryRepositor
 
     init {
         scope.launch {
-            if (dao.count() == 0) dao.upsertAll(seedEntries().map(DiaryEntity::from))
+            if (!prefs.getBoolean(KEY_SEEDED, false)) {
+                if (dao.count() == 0) dao.upsertAll(seedEntries().map(DiaryEntity::from))
+                prefs.edit().putBoolean(KEY_SEEDED, true).apply()
+            }
         }
     }
 
@@ -45,7 +52,16 @@ class RoomDiaryRepository private constructor(context: Context) : DiaryRepositor
         scope.launch { dao.delete(id) }
     }
 
+    override fun clear() {
+        scope.launch {
+            dao.deleteAll()
+            prefs.edit().putBoolean(KEY_SEEDED, true).apply()
+        }
+    }
+
     companion object {
+        private const val KEY_SEEDED = "seeded"
+
         @Volatile private var instance: RoomDiaryRepository? = null
 
         fun get(context: Context): RoomDiaryRepository = instance ?: synchronized(this) {

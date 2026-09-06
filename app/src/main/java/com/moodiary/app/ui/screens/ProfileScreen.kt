@@ -76,6 +76,7 @@ fun ProfileScreen(
     mcpEnabled: Boolean,
     onMcpChange: (Boolean) -> Unit,
     mcpCommand: String?,
+    onFactoryReset: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -212,6 +213,24 @@ fun ProfileScreen(
                 onClick = onCheckUpdate,
             )
         }
+
+        // 设计稿没有这一行。它单独一张卡而不是接在 数据 组后面,是因为这是本机唯一
+        // 不可撤销的操作 —— 挨着「检查更新」太容易手滑。
+        Column(
+            modifier = Modifier
+                .padding(start = 16.dp, end = 16.dp, top = 22.dp)
+                .shadow(1.dp, CardShape, spotColor = MoodiaryColors.TextPrimary)
+                .clip(CardShape)
+                .background(MoodiaryColors.Surface)
+                .border(1.dp, MoodiaryColors.Border, CardShape),
+        ) {
+            SettingRow(
+                iconRes = R.drawable.ic_trash,
+                title = stringResource(R.string.profile_reset),
+                destructive = true,
+                onClick = onFactoryReset,
+            )
+        }
         Spacer(Modifier.height(24.dp))
     }
 }
@@ -250,6 +269,8 @@ private fun SettingRow(
     detail: String? = null,
     detailColor: Color = MoodiaryColors.TextMuted,
     showDot: Boolean = false,
+    /** 恢复出厂设置 is the one row drawn in the destructive colour. */
+    destructive: Boolean = false,
     onClick: (() -> Unit)? = null,
 ) {
     Row(
@@ -262,14 +283,14 @@ private fun SettingRow(
         Icon(
             painterResource(iconRes),
             contentDescription = null,
-            tint = MoodiaryColors.TextTertiary,
+            tint = if (destructive) MoodiaryColors.Destructive else MoodiaryColors.TextTertiary,
             modifier = Modifier.size(18.dp),
         )
         Spacer(Modifier.width(12.dp))
         Text(
             title,
             style = if (onClick != null) MoodiaryType.TitleSmall else MoodiaryType.Label,
-            color = MoodiaryColors.TextPrimary,
+            color = if (destructive) MoodiaryColors.Destructive else MoodiaryColors.TextPrimary,
             modifier = Modifier.weight(1f),
         )
         detail?.let {
@@ -386,6 +407,83 @@ fun ApiKeyDialog(onSave: (String) -> Unit, onDismiss: () -> Unit) {
                     color = MoodiaryColors.AccentText,
                     strong = true,
                     onClick = { onSave(value) },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+    }
+}
+
+/**
+ * 恢复出厂设置 的确认框. Same in-tree scrim as [ApiKeyDialog], so it dims the bottom bar
+ * too, and the same shape as 09 删除确认 — this is the same kind of irreversible tap,
+ * only bigger.
+ */
+@Composable
+fun FactoryResetDialog(entryCount: Int, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    BackHandler(onBack = onDismiss)
+
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(MoodiaryColors.Scrim)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onDismiss,
+            ),
+    )
+    Box(
+        Modifier.fillMaxSize().padding(horizontal = 32.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        val shape = RoundedCornerShape(16.dp)
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .shadow(16.dp, shape, spotColor = MoodiaryColors.TextPrimary)
+                .clip(shape)
+                .background(MoodiaryColors.Surface)
+                .border(1.dp, MoodiaryColors.BorderStrong, shape)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = {},
+                ),
+        ) {
+            Column(
+                modifier = Modifier.padding(start = 22.dp, end = 22.dp, top = 24.dp, bottom = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    stringResource(R.string.profile_reset_title),
+                    style = MoodiaryType.DialogTitle,
+                    color = MoodiaryColors.TextPrimary,
+                    textAlign = TextAlign.Center,
+                )
+                Text(
+                    stringResource(R.string.profile_reset_body, entryCount),
+                    style = MoodiaryType.LabelMedium,
+                    color = MoodiaryColors.TextTertiary,
+                    textAlign = TextAlign.Center,
+                )
+            }
+            RowDivider()
+            Row(Modifier.fillMaxWidth()) {
+                DialogButton(
+                    label = stringResource(R.string.action_cancel),
+                    color = MoodiaryColors.TextPrimary,
+                    strong = false,
+                    onClick = onDismiss,
+                    modifier = Modifier.weight(1f),
+                )
+                Box(Modifier.width(1.dp).height(50.dp).background(MoodiaryColors.Border))
+                DialogButton(
+                    label = stringResource(R.string.profile_reset_confirm),
+                    color = MoodiaryColors.Destructive,
+                    strong = true,
+                    onClick = onConfirm,
                     modifier = Modifier.weight(1f),
                 )
             }

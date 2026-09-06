@@ -28,5 +28,10 @@ class InsightCache(context: Context) {
             .apply()
     }
 
+    /** 恢复出厂设置. */
+    fun clear() {
+        prefs.edit().clear().apply()
+    }
+
     private fun key(period: ReviewPeriod, field: String) = "${period.name.lowercase()}_$field"
 }
