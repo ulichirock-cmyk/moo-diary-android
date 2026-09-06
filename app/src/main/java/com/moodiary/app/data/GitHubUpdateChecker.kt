@@ -16,10 +16,13 @@ import java.net.URL
  *
  * Anything unexpected — no network, no releases yet, a release without an APK — reads as
  * "no update", because a failed check must never block the app it was launched with.
+ * An empty [repo] (the debug build, which has its own application id) never checks:
+ * the release APK would install beside it as a second app, not as an update.
  */
 class GitHubUpdateChecker(private val repo: String) : UpdateChecker {
 
     override suspend fun check(currentVersion: String): UpdateInfo? = withContext(Dispatchers.IO) {
+        if (repo.isBlank()) return@withContext null
         val release = runCatching { fetchLatestRelease() }.getOrNull() ?: return@withContext null
         val version = release.optString("tag_name").removePrefix("v").trim()
         if (version.isEmpty() || !isNewer(version, currentVersion)) return@withContext null

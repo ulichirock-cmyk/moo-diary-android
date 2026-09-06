@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">moodiary</string>
+    <!-- 桌面 / 应用列表里的名字。debug 构建在 src/debug 里覆盖成带标记的版本,
+         好和正式版分开;时间线顶上的 wordmark 用的是 app_name,不受影响。 -->
+    <string name="app_label">moodiary</string>
 
     <!-- Bottom navigation -->
     <string name="tab_timeline">时间线</string>

@@ -63,6 +63,13 @@ android {
     }
 
     buildTypes {
+        debug {
+            // 和正式版共存:装 debug 不用先卸载线上那个,两边各自的日记互不影响。
+            applicationIdSuffix = ".debug"
+            // debug 包名不一样,下回来的正式 APK 会装成第二个 App 而不是升级 —— 不查。
+            buildConfigField("String", "UPDATE_REPO", "\"\"")
+        }
+
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
