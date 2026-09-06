@@ -80,6 +80,8 @@
     <string name="profile_lock">应用锁</string>
     <string name="profile_lock_value">生物识别</string>
     <string name="profile_check_update">检查更新</string>
+    <string name="profile_name_dialog_title">改个名字</string>
+    <string name="profile_name_hint">你的名字</string>
     <string name="profile_reset">恢复出厂设置</string>
     <string name="profile_reset_title">恢复出厂设置?</string>
     <string name="profile_reset_body">%1$d 篇日记、全部照片、AI Key 和所有开关将从本机移除,无法恢复。日记本会变成空的。</string>

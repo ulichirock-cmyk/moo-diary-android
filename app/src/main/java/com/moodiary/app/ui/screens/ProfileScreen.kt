@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -25,6 +26,12 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import com.moodiary.app.data.ProfileSettings
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,7 +51,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.moodiary.app.R
 import com.moodiary.app.data.DiaryEntry
-import com.moodiary.app.data.OWNER_NAME
 import com.moodiary.app.data.photoCount
 import com.moodiary.app.data.streak
 import com.moodiary.app.ui.components.CardShape
@@ -65,6 +71,8 @@ import com.moodiary.app.ui.theme.MoodiaryType
 @Composable
 fun ProfileScreen(
     entries: List<DiaryEntry>,
+    ownerName: String,
+    onEditName: () -> Unit,
     updateVersion: String?,
     hasApiKey: Boolean,
     autoTag: Boolean,
@@ -85,8 +93,11 @@ fun ProfileScreen(
             .verticalScroll(rememberScrollState())
             .padding(bottom = bottomBarContentPadding()),
     ) {
+        // 设计稿里名字是死的。整行可点开改名 —— 没有登录,名字就只是本机的一个字符串。
         Row(
-            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 14.dp),
+            modifier = Modifier
+                .clickable(onClick = onEditName)
+                .padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
@@ -97,14 +108,14 @@ fun ProfileScreen(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    OWNER_NAME.take(1),
+                    ownerName.take(1),
                     style = MoodiaryType.Numeral.copy(fontSize = 24.sp),
                     color = MoodiaryColors.AccentText,
                 )
             }
             Spacer(Modifier.width(14.dp))
             Text(
-                OWNER_NAME,
+                ownerName,
                 style = MoodiaryType.TitleSmall.copy(fontSize = 18.sp),
                 color = MoodiaryColors.TextPrimary,
             )
@@ -336,7 +347,8 @@ fun ApiKeyDialog(onSave: (String) -> Unit, onDismiss: () -> Unit) {
             ),
     )
     Box(
-        Modifier.fillMaxSize().padding(horizontal = 32.dp),
+        // 键盘弹起来时整块跟着抬,否则「取消 / 保存」被压在输入法下面。
+        Modifier.fillMaxSize().imePadding().padding(horizontal = 32.dp),
         contentAlignment = Alignment.Center,
     ) {
         val shape = RoundedCornerShape(16.dp)
@@ -414,6 +426,100 @@ fun ApiKeyDialog(onSave: (String) -> Unit, onDismiss: () -> Unit) {
     }
 }
 
+/** 改名. Same card as [ApiKeyDialog]; the field starts on the current name. */
+@Composable
+fun OwnerNameDialog(current: String, onSave: (String) -> Unit, onDismiss: () -> Unit) {
+    var value by remember {
+        mutableStateOf(TextFieldValue(current, TextRange(current.length)))
+    }
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) { focusRequester.requestFocus() }
+    BackHandler(onBack = onDismiss)
+
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(MoodiaryColors.Scrim)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onDismiss,
+            ),
+    )
+    Box(
+        // 键盘弹起来时整块跟着抬,否则「取消 / 保存」被压在输入法下面。
+        Modifier.fillMaxSize().imePadding().padding(horizontal = 32.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        val shape = RoundedCornerShape(16.dp)
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .shadow(16.dp, shape, spotColor = MoodiaryColors.TextPrimary)
+                .clip(shape)
+                .background(MoodiaryColors.Surface)
+                .border(1.dp, MoodiaryColors.BorderStrong, shape)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = {},
+                ),
+        ) {
+            Column(
+                modifier = Modifier.padding(start = 22.dp, end = 22.dp, top = 24.dp, bottom = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    stringResource(R.string.profile_name_dialog_title),
+                    style = MoodiaryType.DialogTitle,
+                    color = MoodiaryColors.TextPrimary,
+                    textAlign = TextAlign.Center,
+                )
+                OutlinedTextField(
+                    value = value,
+                    onValueChange = {
+                        if (it.text.length <= ProfileSettings.MAX_NAME_LENGTH) value = it
+                    },
+                    singleLine = true,
+                    placeholder = {
+                        Text(stringResource(R.string.profile_name_hint), color = MoodiaryColors.TextMuted)
+                    },
+                    shape = RowShape,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = MoodiaryColors.Field,
+                        unfocusedContainerColor = MoodiaryColors.Field,
+                        focusedBorderColor = MoodiaryColors.AccentOutline,
+                        unfocusedBorderColor = MoodiaryColors.BorderStrong,
+                        cursorColor = MoodiaryColors.Accent,
+                        focusedTextColor = MoodiaryColors.TextPrimary,
+                        unfocusedTextColor = MoodiaryColors.TextPrimary,
+                    ),
+                    modifier = Modifier.fillMaxWidth().padding(top = 6.dp).focusRequester(focusRequester),
+                )
+            }
+            RowDivider()
+            Row(Modifier.fillMaxWidth()) {
+                DialogButton(
+                    label = stringResource(R.string.action_cancel),
+                    color = MoodiaryColors.TextPrimary,
+                    strong = false,
+                    onClick = onDismiss,
+                    modifier = Modifier.weight(1f),
+                )
+                Box(Modifier.width(1.dp).height(50.dp).background(MoodiaryColors.Border))
+                DialogButton(
+                    label = stringResource(R.string.profile_ai_save),
+                    color = MoodiaryColors.AccentText,
+                    strong = true,
+                    onClick = { onSave(value.text) },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+    }
+}
+
 /**
  * 恢复出厂设置 的确认框. Same in-tree scrim as [ApiKeyDialog], so it dims the bottom bar
  * too, and the same shape as 09 删除确认 — this is the same kind of irreversible tap,
@@ -434,7 +540,8 @@ fun FactoryResetDialog(entryCount: Int, onConfirm: () -> Unit, onDismiss: () -> 
             ),
     )
     Box(
-        Modifier.fillMaxSize().padding(horizontal = 32.dp),
+        // 键盘弹起来时整块跟着抬,否则「取消 / 保存」被压在输入法下面。
+        Modifier.fillMaxSize().imePadding().padding(horizontal = 32.dp),
         contentAlignment = Alignment.Center,
     ) {
         val shape = RoundedCornerShape(16.dp)

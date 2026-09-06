@@ -88,6 +88,9 @@ touched one class and nothing else.
   (`ios-frame.jsx`): fake status bar, dynamic island, home indicator. Those are
   the mockup's device, not the app — the Android build goes edge-to-edge and uses
   real system insets.
+- **The author's name is editable.** The design writes 念念 into 我的; tapping it
+  opens a rename dialog (`ProfileSettings`, this device only, blank falls back to the
+  design's name).
 - **A factory reset.** 我的 ends with a destructive row of its own: entries, photo
   copies, the API key, every switch and the caches all go, and the diary is left
   *empty* — the sample entries do not come back. Whether to seed is a `seeded` flag,

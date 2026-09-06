@@ -34,6 +34,7 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
     private val updateChecker: UpdateChecker = GitHubUpdateChecker(BuildConfig.UPDATE_REPO)
     private val updateInstaller = UpdateInstaller(application)
     private val aiSettings = AiSettings(application)
+    private val profileSettings = ProfileSettings(application)
     private val insightCache = InsightCache(application)
     private val insightGenerator: InsightGenerator = DeepSeekInsightGenerator { aiSettings.apiKey }
     private val assistant = DiaryAssistant { aiSettings.apiKey }
@@ -564,6 +565,16 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
         chatMessages.clear()
     }
 
+    // ── 我的 ─────────────────────────────────────────────────────────────────
+    /** The name over the stats on 我的; tapping it opens the rename dialog. */
+    var ownerName by mutableStateOf(profileSettings.ownerName)
+        private set
+
+    fun saveOwnerName(name: String) {
+        profileSettings.ownerName = name
+        ownerName = profileSettings.ownerName
+    }
+
     // ── AI settings ──────────────────────────────────────────────────────────
     var hasApiKey by mutableStateOf(aiSettings.apiKey != null)
         private set
@@ -608,6 +619,7 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
 
     fun saveApiKey(key: String) {
         aiSettings.apiKey = key.takeIf { it.isNotBlank() }
+        ownerName = profileSettings.ownerName
         hasApiKey = aiSettings.apiKey != null
         // The key changed, so whatever the cards show (NoKey, an auth error) is stale.
         insightSources.clear()
@@ -663,6 +675,7 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
         repository.clear()
         photoStore.clear()
         aiSettings.clear()
+        profileSettings.clear()
         insightCache.clear()
         // Coil's images, the map tiles, a half-downloaded update — by name, because
         // Room keeps its own lock file in the same directory.
@@ -684,6 +697,7 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
         visibleMonth = YearMonth.now()
         selectedDate = LocalDate.now()
 
+        ownerName = profileSettings.ownerName
         hasApiKey = aiSettings.apiKey != null
         autoTagEnabled = aiSettings.autoTag
         writingPromptEnabled = aiSettings.writingPrompt
