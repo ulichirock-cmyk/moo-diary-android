@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Text
 import coil.compose.AsyncImage
@@ -75,14 +76,18 @@ fun EntryPhotoBlock(photos: List<String>, modifier: Modifier = Modifier) {
     }
 }
 
-/** 照片标注 — the small muted line under a photo, in the editor and on 日记详情. */
+/**
+ * 照片标注 — the small muted line under a photo, in the editor and on 日记详情.
+ * Centred under the photo it belongs to, the way a print caption sits.
+ */
 @Composable
 fun PhotoCaption(text: String, modifier: Modifier = Modifier) {
     Text(
         text,
         style = MoodiaryType.Caption,
         color = MoodiaryColors.TextMuted,
-        modifier = modifier.padding(horizontal = 2.dp),
+        textAlign = TextAlign.Center,
+        modifier = modifier.fillMaxWidth().padding(horizontal = 2.dp),
     )
 }
 
