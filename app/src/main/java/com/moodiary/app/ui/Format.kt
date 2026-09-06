@@ -20,10 +20,14 @@ object Fmt {
     fun monthName(date: LocalDate): String = MONTHS[date.monthValue - 1]
 
     /** `02` */
-    fun dayNumeral(date: LocalDate): String = "%02d".format(date.dayOfMonth)
+    fun dayNumeral(date: LocalDate): String = pad2(date.dayOfMonth)
 
     /** `08:14` */
-    fun time(time: LocalTime): String = "%02d:%02d".format(time.hour, time.minute)
+    fun time(time: LocalTime): String = pad2(time.hour) + ":" + pad2(time.minute)
+
+    // Every timeline card formats three of these while it scrolls past; `"%02d".format`
+    // spins up a Formatter and a locale lookup each time, and these values are 0..59.
+    private fun pad2(value: Int): String = if (value < 10) "0$value" else value.toString()
 
     fun time(dateTime: LocalDateTime): String = time(dateTime.toLocalTime())
 

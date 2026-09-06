@@ -31,6 +31,8 @@ import com.moodiary.app.ui.theme.MoodiaryType
  */
 @Composable
 fun EntryCard(entry: DiaryEntry, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val photos = entry.photos
+    val text = entry.text
     MoodiaryCard(
         modifier = modifier.fillMaxWidth(),
         padding = PaddingValues(20.dp),
@@ -39,12 +41,12 @@ fun EntryCard(entry: DiaryEntry, onClick: () -> Unit, modifier: Modifier = Modif
         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             EntryCardHeader(entry)
 
-            if (entry.photos.isNotEmpty()) {
-                EntryPhotoBlock(entry.photos, Modifier.fillMaxWidth())
+            if (photos.isNotEmpty()) {
+                EntryPhotoBlock(photos, Modifier.fillMaxWidth())
             }
 
-            if (entry.text.isNotBlank()) {
-                Text(entry.text, style = MoodiaryType.Body, color = MoodiaryColors.TextPrimary)
+            if (text.isNotBlank()) {
+                Text(text, style = MoodiaryType.Body, color = MoodiaryColors.TextPrimary)
             }
 
             if (entry.tags.isNotEmpty() || entry.place != null) {

@@ -1,5 +1,6 @@
 package com.moodiary.app.data
 
+import androidx.compose.runtime.Immutable
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -7,6 +8,7 @@ import java.time.LocalDateTime
  * One piece of an entry's body, in reading order. Prose and photos interleave freely
  * (文中图): a sentence, a photo, two more photos, another paragraph.
  */
+@Immutable
 sealed interface Block {
     data class Text(val text: String) : Block
 
@@ -25,6 +27,7 @@ sealed interface Block {
  * There is deliberately no mood field: the design dropped moods entirely in favour of
  * places (see design/SYNC.md).
  */
+@Immutable
 data class DiaryEntry(
     val id: String,
     val createdAt: LocalDateTime,
@@ -34,16 +37,25 @@ data class DiaryEntry(
 ) {
     val date: LocalDate get() = createdAt.toLocalDate()
 
-    /** The prose alone: text blocks trimmed and joined with a blank line, photos left out. */
-    val text: String
-        get() = blocks.filterIsInstance<Block.Text>()
+    /**
+     * The prose alone: text blocks trimmed and joined with a blank line, photos left out.
+     *
+     * Computed once, not on every read: a timeline card reads [text] and [photos] while
+     * it is being composed mid-fling, and a fresh walk of [blocks] there costs both the
+     * allocation and the skip — the new List instance made a card's photo block look
+     * changed to Compose every time.
+     */
+    val text: String by lazy {
+        blocks.filterIsInstance<Block.Text>()
             .map { it.text.trim() }
             .filter { it.isNotEmpty() }
             .joinToString("\n\n")
+    }
 
     /** Every photo in reading order. */
-    val photos: List<String>
-        get() = blocks.filterIsInstance<Block.Photo>().map { it.uri }
+    val photos: List<String> by lazy {
+        blocks.filterIsInstance<Block.Photo>().map { it.uri }
+    }
 }
 
 /**

@@ -33,8 +33,34 @@ DEEPSEEK_API_KEY=sk-...   # 可选,洞察页的每周回顾用它调 deepseek-v4
 
 AGP 8.7.2 / Kotlin 2.0.21 / Compose BOM 2024.10.01 / Room 2.6.1（KSP），minSdk 26、compileSdk 35。
 
-**改完 UI 要真机验证，不要只看编译过没过。** 这个项目的 bug 大多是布局层面的
+**改完 UI 要装到跑着的模拟器上看一眼，不要只看编译过没过。** 这个项目的 bug 大多是布局层面的
 （比如占位文字和输入框叠加错位），编译器不会报。
+
+`adb` 不在 PATH 里，用全路径 `$HOME/android-sdk/platform-tools/adb`：
+
+```bash
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb shell am start -n com.moodiary.app/.MainActivity
+adb exec-out screencap -p > /tmp/s.png      # 截图自己看
+adb shell input tap <x> <y>                 # 屏幕 1080x2400
+```
+
+**滚动流畅度别在模拟器上下结论。** 实测（2026-09-06，时间线 42 篇、单向连续快甩）：
+
+| | 模拟器 release | 真机 release | 真机 debug |
+|---|---|---|---|
+| 刷新率 | ~10fps 封顶 | 120Hz | 120Hz |
+| App UI 线程/帧 中位 | 32ms | 0.42ms | 0.78ms |
+| 整帧 中位 | 96ms | 3.8ms | 4.2ms |
+| 超出 vsync 预算的帧 | 全部 | 0% | 0%（冷图缓存时 6.5%） |
+
+模拟器的 `dequeueBuffer` 中位就有 20–40ms，`dumpsys gfxinfo` 里任何 App 都是 80% janky
+（系统设置页同一手势也是 79%），跟 App 无关。真机上时间线是满帧的。
+
+要看 App 自己花了多少，用 `dumpsys gfxinfo <pkg> framestats` 拆帧：
+`HandleInputStart→SyncStart` 是 App 在 UI 线程的全部活，`AnimationStart→PerformTraversals`
+是 Compose 组合那一段。注意表头列在 Android 16 上多了一列，按表头名字取值别按下标。
+120Hz 上 framestats 只存最近 120 帧 ≈ 1 秒，要一次甩动一次 dump，别甩十次再读。
 
 ## 结构
 
