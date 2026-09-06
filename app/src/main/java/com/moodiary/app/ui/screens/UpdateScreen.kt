@@ -30,6 +30,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.moodiary.app.R
+import com.moodiary.app.data.DiaryViewModel.UpdateState
 import com.moodiary.app.data.UpdateInfo
 import com.moodiary.app.ui.components.Eyebrow
 import com.moodiary.app.ui.components.MoodiaryCard
@@ -40,14 +41,16 @@ import com.moodiary.app.ui.theme.MoodiaryType
  * 12 版本更新.
  *
  * [update] is null when the installed build is current — the design only draws the
- * "new version" state, so the up-to-date copy is ours. The data comes from
- * [com.moodiary.app.data.UpdateChecker], which ships as a stub: there is no release
- * feed for this app yet.
+ * "new version" state, so the up-to-date copy is ours. The data is the latest GitHub
+ * Release (see [com.moodiary.app.data.GitHubUpdateChecker]); 立即更新 downloads that
+ * APK and hands it to the system installer, so the button doubles as the progress
+ * readout — the design has nowhere else to put it.
  */
 @Composable
 fun UpdateScreen(
     currentVersion: String,
     update: UpdateInfo?,
+    state: UpdateState,
     onBack: () -> Unit,
     onUpdate: () -> Unit,
     modifier: Modifier = Modifier,
@@ -140,19 +143,35 @@ fun UpdateScreen(
                 verticalArrangement = Arrangement.spacedBy(14.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
+                val downloading = state as? UpdateState.Downloading
                 Box(
                     Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(10.dp))
                         .background(MoodiaryColors.Accent)
-                        .clickable(onClick = onUpdate)
+                        .clickable(enabled = downloading == null, onClick = onUpdate)
                         .padding(vertical = 15.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        stringResource(R.string.update_now),
+                        text = when {
+                            downloading != null -> stringResource(
+                                R.string.update_downloading,
+                                (downloading.progress * 100).toInt(),
+                            )
+                            state is UpdateState.Failed -> stringResource(R.string.update_retry)
+                            else -> stringResource(R.string.update_now)
+                        },
                         style = MoodiaryType.SheetRowStrong,
                         color = Color.White,
+                    )
+                }
+                if (state is UpdateState.Failed) {
+                    Text(
+                        state.message,
+                        style = MoodiaryType.ListItemSmall,
+                        color = MoodiaryColors.TextMuted,
+                        textAlign = TextAlign.Center,
                     )
                 }
                 Text(

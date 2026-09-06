@@ -5,20 +5,20 @@ data class UpdateInfo(
     val version: String,
     val downloadSize: String,
     val notes: List<String>,
+    /** Where the APK is; null in the sample data used by previews. */
+    val downloadUrl: String? = null,
 )
 
 /**
- * Where the update banner's data comes from.
- *
- * There is no release endpoint for this app yet, so [StubUpdateChecker] returns the
- * sample release from the design. Point this at a real feed (or the store) and both
- * 我的 → 检查更新 and screen 12 follow automatically.
+ * Where the update banner's data comes from — [GitHubUpdateChecker] in the app,
+ * [StubUpdateChecker] (the design's sample release) in previews.
  */
 interface UpdateChecker {
     /** Null when the installed build is current. */
     suspend fun check(currentVersion: String): UpdateInfo?
 }
 
+/** The design's sample release, for previews and for a build with no repo configured. */
 object StubUpdateChecker : UpdateChecker {
     override suspend fun check(currentVersion: String) = UpdateInfo(
         version = "1.0.0",

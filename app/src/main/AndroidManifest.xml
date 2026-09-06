@@ -12,6 +12,10 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- 版本更新 downloads the APK from GitHub Releases and hands it to the system
+         installer. The install itself is always the user's own confirmation. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
     <!-- 地图选点 opens on the device position when it can. Both are optional: the
          screen falls back to a default centre and stays fully usable. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />

@@ -155,11 +155,12 @@ touched one class and nothing else.
   opens on a default centre with the hint line saying so. Built on the platform
   `LocationManager`, deliberately not on `play-services-location`, which would fail
   exactly on the phones this app targets.
-- **Two things are still stubbed behind interfaces**, because each needs a key or an
-  endpoint this project does not have. All the UI around them is real:
+- **One thing is still stubbed behind an interface**, because it needs a key this
+  project does not have. All the UI around it is real:
   - `PlaceSource.nearby()` — the 附近 list is POI search with distances, which needs
     a 高德 / 百度 account. `StubPlaceSource` returns the design's list.
     `PlaceSource.atPin()` is *not* a stub: it reverse-geocodes through the platform
     `Geocoder`, and falls back to the coordinates when a device has no geocoder.
-  - `UpdateChecker` — there is no release feed yet; `StubUpdateChecker` returns the
-    design's sample release.
+- **版本更新 is real**: `GitHubUpdateChecker` reads this repo's latest GitHub Release,
+  and 立即更新 downloads that APK and hands it to the system installer. See 发布 in
+  CLAUDE.md. `StubUpdateChecker` stays for previews.

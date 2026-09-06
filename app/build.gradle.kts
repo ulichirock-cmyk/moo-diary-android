@@ -7,15 +7,33 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
-// Developer default for the DeepSeek key: `DEEPSEEK_API_KEY=sk-...` in local.properties
-// (gitignored), or the environment variable of the same name for a one-off build.
-// The user can always override it from 我的 → AI 洞察.
-val deepSeekApiKey: String = rootProject.file("local.properties")
+val localProperties: Properties? = rootProject.file("local.properties")
     .takeIf { it.exists() }
     ?.let { file -> Properties().apply { file.inputStream().use(::load) } }
-    ?.getProperty("DEEPSEEK_API_KEY")
-    ?.takeIf { it.isNotBlank() }
-    ?: System.getenv("DEEPSEEK_API_KEY").orEmpty()
+
+/** local.properties (gitignored) first, then the environment — that is how CI passes secrets in. */
+fun secret(name: String): String? =
+    localProperties?.getProperty(name)?.takeIf { it.isNotBlank() }
+        ?: System.getenv(name)?.takeIf { it.isNotBlank() }
+
+// Developer default for the DeepSeek key: `DEEPSEEK_API_KEY=sk-...` in local.properties,
+// or the environment variable of the same name for a one-off build.
+// The user can always override it from 我的 → AI 洞察.
+val deepSeekApiKey: String = secret("DEEPSEEK_API_KEY").orEmpty()
+
+// Tag-driven versioning: the release workflow passes -PversionName=0.2.0 -PversionCode=<run>.
+// A plain local build keeps the developer defaults below.
+val appVersionName: String = (findProperty("versionName") as String?) ?: "0.1.0"
+val appVersionCode: Int = (findProperty("versionCode") as String?)?.toInt() ?: 1
+
+/**
+ * Signing for the APK published to GitHub Releases. Every build must be signed with the
+ * *same* key or the phone refuses to install the update over the one it has — so the
+ * keystore lives outside the repo (`~/keys/moodiary-release.jks` locally, a base64
+ * secret decoded to a file in CI) and is pointed at by MOODIARY_KEYSTORE.
+ * Without it the release build is simply unsigned, as before.
+ */
+val keystoreFile: File? = secret("MOODIARY_KEYSTORE")?.let(::File)?.takeIf { it.exists() }
 
 android {
     namespace = "com.moodiary.app"
@@ -25,16 +43,30 @@ android {
         applicationId = "com.moodiary.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = appVersionCode
+        versionName = appVersionName
 
         buildConfigField("String", "DEEPSEEK_API_KEY", "\"$deepSeekApiKey\"")
+        // 版本更新 asks this repo's GitHub Releases what the newest build is.
+        buildConfigField("String", "UPDATE_REPO", "\"ulichirock-cmyk/moo-diary-android\"")
+    }
+
+    signingConfigs {
+        if (keystoreFile != null) {
+            create("release") {
+                storeFile = keystoreFile
+                storePassword = secret("MOODIARY_KEYSTORE_PASSWORD")
+                keyAlias = secret("MOODIARY_KEY_ALIAS") ?: "moodiary"
+                keyPassword = secret("MOODIARY_KEY_PASSWORD") ?: secret("MOODIARY_KEYSTORE_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.findByName("release")
         }
     }
 

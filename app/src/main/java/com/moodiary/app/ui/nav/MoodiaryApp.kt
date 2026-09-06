@@ -253,7 +253,8 @@ fun MoodiaryApp(vm: DiaryViewModel = viewModel()) {
                         currentVersion = version,
                         update = vm.availableUpdate,
                         onBack = { pop() },
-                        onUpdate = { pop() },
+                        state = vm.updateState,
+                        onUpdate = { vm.startUpdate() },
                     )
 
                     is Overlay.Detail -> {

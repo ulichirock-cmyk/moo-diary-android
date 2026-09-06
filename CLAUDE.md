@@ -118,9 +118,45 @@ ui/nav/        MoodiaryApp.kt —— 四个 tab + 一个浮层back stack（最�
 - 定位是可选的：没授权就开在默认中心（朝阳公园），提示行换成「没有定位权限」，
   屏还是能用。用的是系统 `LocationManager`，**不要引 `play-services-location`**，
   这批机器不一定有 GMS
-- `PlaceSource.nearby()` / `UpdateChecker` 两处还是桩：「附近」那种带距离的 POI
-  搜索要高德/百度的 key，更新要发布源，这个工程都没有。`atPin()` 不是桩，走系统
-  `Geocoder` 反查地名（机器上没有 geocoder 后端时退回坐标文本）
+- `PlaceSource.nearby()` 还是桩：「附近」那种带距离的 POI 搜索要高德/百度的 key，
+  这个工程没有。`atPin()` 不是桩，走系统 `Geocoder` 反查地名（机器上没有 geocoder
+  后端时退回坐标文本）
+- 版本更新是真的：`GitHubUpdateChecker` 读本仓库最新的 GitHub Release，「立即更新」
+  下载那个 APK 再交给系统安装器（Android 不给第三方 App 静默安装，最后一下必须用户点）。
+  流程见下面的「发布」
+
+## 发布
+
+打个 tag 就出版本：
+
+```bash
+git tag v0.2.0 && git push origin v0.2.0
+```
+
+`.github/workflows/release.yml` 构建签名 release APK 并发到 GitHub Releases。
+版本号来自 tag（`-PversionName`），`versionCode` 用 Actions 的 run number。
+release 正文是上一个 tag 以来的提交标题，每行一条——App 的「版本更新」页就照着这些行画，
+所以提交标题写人话。也可以在 Actions 页手动跑，填个版本号。
+
+**签名 key 不能换。** 换了手机就装不上更新，只能卸载重装（日记全丢）。key 在
+`~/keys/moodiary-release.jks`（密码在旁边的 `.password` 文件），仓库里没有也不该有。
+CI 用这几个 secret：
+
+| secret | 内容 |
+|---|---|
+| `MOODIARY_KEYSTORE_BASE64` | `base64 -w0 ~/keys/moodiary-release.jks` 的输出 |
+| `MOODIARY_KEYSTORE_PASSWORD` | keystore 密码 |
+| `DEEPSEEK_API_KEY` | 可选，不配就让用户自己在「我的 → AI 洞察」填 |
+
+本地也能出签名包：
+
+```bash
+MOODIARY_KEYSTORE=$HOME/keys/moodiary-release.jks \
+MOODIARY_KEYSTORE_PASSWORD=$(cat ~/keys/moodiary-release.password) \
+./gradlew assembleRelease -PversionName=0.1.1 -PversionCode=2
+```
+
+不给这些变量，release 出来的就是不签名的包（和以前一样），装不上。
 
 ## 心情体系已经删了
 

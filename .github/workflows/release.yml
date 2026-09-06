@@ -1,0 +1,91 @@
+name: 发布 APK
+
+# 打 tag 就发版:`git tag v0.2.0 && git push origin v0.2.0`。
+# 也可以在 Actions 页手动跑,填个版本号,它会自己建 tag。
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '版本号,例如 0.2.0(不要带 v)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # 要历史才能列出上一版以来的提交
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - uses: android-actions/setup-android@v3
+
+      - name: 定版本号
+        id: v
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            V="${{ inputs.version }}"
+          else
+            V="${GITHUB_REF_NAME#v}"
+          fi
+          echo "name=$V" >> "$GITHUB_OUTPUT"
+          echo "tag=v$V" >> "$GITHUB_OUTPUT"
+
+      # 每个版本必须用同一个 key 签,否则手机装不上更新。
+      - name: 取出签名 keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.MOODIARY_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "缺 MOODIARY_KEYSTORE_BASE64 secret,没法签名" >&2
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/moodiary-release.jks"
+
+      - name: 构建 release APK
+        env:
+          MOODIARY_KEYSTORE: ${{ runner.temp }}/moodiary-release.jks
+          MOODIARY_KEYSTORE_PASSWORD: ${{ secrets.MOODIARY_KEYSTORE_PASSWORD }}
+          MOODIARY_KEY_ALIAS: moodiary
+          # 没配这个 secret 也能构建,只是装出来的包要自己在「我的 → AI 洞察」填 key
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: |
+          ./gradlew assembleRelease \
+            -PversionName="${{ steps.v.outputs.name }}" \
+            -PversionCode="${{ github.run_number }}"
+          mv app/build/outputs/apk/release/app-release.apk \
+             "moodiary-${{ steps.v.outputs.name }}.apk"
+
+      # release 正文每行一条,App 的「版本更新」页直接按行显示,所以这里只放提交标题。
+      - name: 写更新说明
+        id: notes
+        run: |
+          PREV=$(git tag --sort=-creatordate | grep -v "^${{ steps.v.outputs.tag }}$" | head -1)
+          {
+            if [ -n "$PREV" ]; then
+              git log --no-merges --pretty=%s "$PREV..HEAD"
+            else
+              git log --no-merges --pretty=%s -10
+            fi
+          } > notes.txt
+          cat notes.txt
+
+      - name: 发布到 Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.v.outputs.tag }}" \
+            "moodiary-${{ steps.v.outputs.name }}.apk" \
+            --target "$GITHUB_SHA" \
+            --title "moodiary ${{ steps.v.outputs.name }}" \
+            --notes-file notes.txt

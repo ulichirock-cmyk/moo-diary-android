@@ -1,6 +1,7 @@
 package com.moodiary.app.data
 
 import android.app.Application
+import com.moodiary.app.BuildConfig
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -29,7 +30,8 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
     private val photoStore = PhotoStore(application)
     // Reverse geocoding is a platform service, so it needs the application context.
     private val placeSource: PlaceSource = GeocoderPlaceSource(application)
-    private val updateChecker: UpdateChecker = StubUpdateChecker
+    private val updateChecker: UpdateChecker = GitHubUpdateChecker(BuildConfig.UPDATE_REPO)
+    private val updateInstaller = UpdateInstaller(application)
     private val aiSettings = AiSettings(application)
     private val insightCache = InsightCache(application)
     private val insightGenerator: InsightGenerator = DeepSeekInsightGenerator { aiSettings.apiKey }
@@ -408,6 +410,45 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
 
     fun checkForUpdate(currentVersion: String) {
         viewModelScope.launch { availableUpdate = updateChecker.check(currentVersion) }
+    }
+
+    /** 立即更新 is a download and then a system install prompt — this is where it stands. */
+    sealed interface UpdateState {
+        data object Idle : UpdateState
+        data class Downloading(val progress: Float) : UpdateState
+        /** Downloaded; the system installer is up, or waiting on the 未知来源 permission. */
+        data object Handoff : UpdateState
+        data class Failed(val message: String) : UpdateState
+    }
+
+    var updateState by mutableStateOf<UpdateState>(UpdateState.Idle)
+        private set
+    private var updateJob: Job? = null
+
+    /**
+     * Downloads the release APK and hands it to the system installer. Android has no
+     * silent install for a third-party app, so the last step is always the user's tap;
+     * without the 未知来源 permission we send them to that settings page instead and
+     * leave the downloaded file ready for the next try.
+     */
+    fun startUpdate() {
+        val url = availableUpdate?.downloadUrl ?: return
+        if (updateJob?.isActive == true) return
+        updateJob = viewModelScope.launch {
+            updateState = UpdateState.Downloading(0f)
+            runCatching { updateInstaller.download(url) { updateState = UpdateState.Downloading(it) } }
+                .onSuccess { apk ->
+                    updateState = UpdateState.Handoff
+                    if (updateInstaller.canInstall()) {
+                        updateInstaller.install(apk)
+                    } else {
+                        updateInstaller.openInstallPermissionSettings()
+                    }
+                }
+                .onFailure {
+                    updateState = UpdateState.Failed(it.message ?: "下载失败,稍后再试")
+                }
+        }
     }
 
     // ── Insights ─────────────────────────────────────────────────────────────
